@@ -1,9 +1,6 @@
-from msilib.text import tables
-from attr import attr
+from csv import excel_tab
 import lxml.etree as ET
-from matplotlib.table import table
 from numpy import concatenate
-from pyparsing import match_only_at_col
 
 class NokiaXML(object):
     def __init__(self):
@@ -47,7 +44,7 @@ class NokiaXML(object):
                 self.mo_dn = attrib['distName']
 
                 self.this_mo = dict()   #inicia novo elemento
-                self.this_mo['DN'] = self.mo_dn                
+                #self.this_mo['DN'] = self.mo_dn
 
                 if self.mo_class not in self.set_class:
                     self.all_mo[self.mo_class] = dict()
@@ -79,9 +76,17 @@ class NokiaXML(object):
                 self.mtype.pop()
                 
                 self.all_mo[self.mo_class][self.mo_id] = self.this_mo
-                
-                set_missing = set(self.all_p[self.mo_class]) - self.set_p
-                self.all_p[self.mo_class].append(list(set_missing))
+
+                list_newp = list(self.this_mo.keys())
+                full_plist = self.all_p[self.mo_class]
+
+                if len(full_plist) >  0:
+                    list_missing = list(set(list_newp) - self.set_p)
+                    #list_newp.extend(list_missing)
+                else:
+                    list_missing = list_newp                
+
+                self.all_p[self.mo_class].extend(list_missing)
 
                 self.n +=1
                 self.mo_id = 0
@@ -97,40 +102,45 @@ class NokiaXML(object):
     def close(self):
         #nLNBTS = len(self.all_mo.get('LNBTS'))
         #nBCF = len(self.all_mo.get('BCF'))
-        print("Parsing done! Found %d Elements." % self.n)
-        return self.all_mo
+        print("\nParsing done! \n - Found %d Elements.\n" % self.n)
+        return self.all_mo, self.all_p
 
-def process(xml_file):
+def process(xml_file, caminho):
 
     #ttt = ET.parse(xml_file)
     #root = ttt.getroot()
     #root.tag
     
     parser = ET.XMLParser(target = NokiaXML())
-    results = ET.parse(xml_file, parser)
-
-    caminho = "C:\\Users\\oi399542\\Documents\\base_DUMPs\\"
+    results, params = ET.parse(xml_file, parser)
 
     for m,d in results.items():
 
         outfile = caminho + m + '.csv'
+        out = open(outfile, 'w')
 
-        pName = ''
-        pValue = ''
+        bp = params[m]
 
+        mycols = ','.join(bp)
+        out.write(mycols)
+        out.write('\n')
+
+        #print('Exporting %s...' % m)
         for id,p in d.items():
+            
+            myvals = ''
 
-            mycols = ','.join(list(p.keys()))
-            myvals = '\n'.join(list(p.values()))
+            for pp in bp:
 
-            out = open(outfile, 'w')
-            out.write(mycols)
-            out.write('\n')
-            out.write(str(myvals))
-            out.close()
+                try:
+                    myvals += ',' + p[pp]
+                except:
+                    myvals += ','
 
-    #     outfile = caminho + m + '.csv'
-    #     out.close()
+            myvals = myvals[1:] + '\n'
 
-    a=1
+            out.write(myvals)
+        
+        out.close()
+
  

@@ -1,0 +1,3 @@
+    opt_list4 = set(('LNCEL_FDD', 'LNBTS', 'LNADJ', 'LNCEL', 'LNREL', 'IRFIM', 'SIB', 'LNADJL', 'LNADJW', 'LNADJG', 'LNHOIF', 'CAREL', 'LNBTS_FDD'))
+    opt_list3 = set(('ADJI', 'WBTS', 'ADJS', 'ADJD', 'WCEL', 'ADJG', 'ADJL', 'RNC'))
+    opt_list2 = set(('LAPD', 'MAL', 'TRX', 'BCF', 'ADJL', 'DAP', 'BTS', 'CSDAP', 'ADCE', 'ADJW', 'BAL', 'BSC'))
