@@ -1,6 +1,5 @@
 from csv import excel_tab
 import lxml.etree as ET
-from numpy import concatenate
 
 class NokiaXML(object):
     def __init__(self):
@@ -86,6 +85,7 @@ class NokiaXML(object):
                 self.mo_class = attrib['class']
                 self.mo_dn = attrib['distName']
                 
+                # Primeiro parâmetro
                 self.this_mo = {'DN': self.mo_dn}
                 self.set_p = {'DN'}
 
@@ -94,7 +94,7 @@ class NokiaXML(object):
                     cdn = pdn.split('-')
                     self.this_mo[cdn[0]] = cdn[1]
                     self.set_p.add(cdn[0])
-
+                
                 self.this_mo['ID'] = self.mo_id
                 self.set_p.add('ID')
 
@@ -163,35 +163,29 @@ class NokiaXML(object):
         return self.all_mo, self.all_p
 
 
-def process(xml_file, output_path):
+def process(xml_file, output_path, fReadType, opt_list):
 
-    #ttt = ET.parse(xml_file)
-    #root = ttt.getroot()
-    #root.tag
     str_ignored = ''
+    str_added = ''
     
     parser = ET.XMLParser(target = NokiaXML())
     results, params = ET.parse(xml_file, parser)
 
     print("\n# Exporting elements...\n")
 
-    opt_list = ['LNCEL_FDD', 'LNBTS', 'LNADJ', 'LNCEL', 'IRFIM', 'SIB', 'LNADJL', 'LNADJW', 'LNADJG', 
-    'LNHOIF', 'CAREL', 'LNBTS_FDD', 'ADJI', 'WBTS', 'ADJS', 'ADJD', 'WCEL', 'ADJG', 'ADJL', 'RNC',
-    'LAPD', 'MAL', 'TRX', 'BCF', 'ADJL', 'DAP', 'BTS', 'CSDAP', 'ADCE', 'ADJW', 'BAL', 'BSC',
-    'LNMME','MOPR']
-
     for m,d in results.items():
 
-        #Skips if less than 3 elements
-        if (len(d) < 3 | len(params[m])<3) | (m not in opt_list):
-            str_ignored += '\n    - ' + m.ljust(15) + str(len(d)).rjust(6) + ' params, ' + str(len(params[m])).rjust(3) + ' elements'
+        if (fReadType != 'READALL') and (m not in opt_list):
+            str_ignored += '\n    - ' + m.ljust(15) + str(len(d)).rjust(5) + ' elements, ' + str(len(params[m])).rjust(3) + ' params'
             continue
+
+        str_added += '\n    - ' + m.ljust(15) + str(len(d)).rjust(5) + ' elements, ' + str(len(params[m])).rjust(3) + ' params'
 
         output_file = output_path + m + '.csv'
         out = open(output_file, 'w')
 
         pList = params[m]
-        ibp = pList.index('ID')
+        ibp = pList.index('ID') + 1
 
         bp = pList[:ibp] 
         pNames = pList[ibp:]
@@ -221,4 +215,12 @@ def process(xml_file, output_path):
                 
         out.close()
 
-    print("  + Done!\n\n  + Ignored elements:\n" + str_ignored)
+
+    with open(output_path + "resultado.txt", 'w') as f:            #, encoding = 'utf-8'
+        f.write("Found Elements:\n")
+        f.write(str_added)
+        f.write("\n\nIgnored Elements:\n")
+        f.write(str_ignored)
+
+    #print("\n  + Done!\n\n  + Ignored elements:\n" + str_ignored)
+    print("\n  + Done!\n\n  + Elements found:\n" + str_ignored)
