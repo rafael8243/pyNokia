@@ -217,5 +217,4 @@ def process(xml_file, output_path, fReadType, opt_list):
         f.write("\n\nElements ignored:\n")
         f.write(str_ignored)
 
-    #print("\n  + Done!\n\n  + Ignored elements:\n" + str_ignored)
     print("\n  + Exported elements:\n" + str_added)
