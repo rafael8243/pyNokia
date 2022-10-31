@@ -25,20 +25,20 @@ class NokiaXML(object):
 
     def getdada_p_list(self, d):
         if self.this_p in self.this_item:
-            self.this_item[self.this_list] += d + ';'
+            self.this_item[self.this_list] += ';' + d
         else:
-            self.this_item[self.this_list] = d + ';'
+            self.this_item[self.this_list] = d
 
     def getdada_p_item(self, d):
         if self.this_p in self.this_item:
-            self.this_item[self.this_p] += d + ';'
+            self.this_item[self.this_p] += ';' + d
         else:
-            self.this_item[self.this_p] = d + ';'
+            self.this_item[self.this_p] = d
 
 
     # INICIO DO PARAMETRO
     def start_p(self, n):
-        self.this_p = self.this_list + n
+        self.this_p = n
         self.set_p.add(self.this_p)
 
     def start_p_list(self):
@@ -46,7 +46,7 @@ class NokiaXML(object):
         self.set_p.add(self.this_p)
 
     def start_p_item(self, n):
-        self.this_p = self.this_list + n
+        self.this_p = self.this_list + '_' + n
 
 
     # LEITURA
@@ -61,7 +61,6 @@ class NokiaXML(object):
                 try:
                     self.startp(str(attrib['name']))
                 except:
-                    #print('P sem LIST')
                     self.startp() # P sem LIST
                 
             case 'list':
@@ -71,7 +70,7 @@ class NokiaXML(object):
 
                 self.this_item = dict()
 
-                self.this_list = attrib.get('name') + '_'
+                self.this_list = attrib.get('name')   #TODO Rever parametros de listas sem ITEM.
 
             case 'item':
                 self.mtype.append('item')
@@ -159,7 +158,7 @@ class NokiaXML(object):
             self.getp(data)
 
     def close(self):
-        print("# File Readed!\n\n  + Found %d elements." % self.n)
+        print("  + Done: %d elements found." % self.n)
         return self.all_mo, self.all_p
 
 
@@ -171,15 +170,15 @@ def process(xml_file, output_path, fReadType, opt_list):
     parser = ET.XMLParser(target = NokiaXML())
     results, params = ET.parse(xml_file, parser)
 
-    print("\n# Exporting elements...\n")
+    print("\n# Exporting elements...")
 
     for m,d in results.items():
 
         if (fReadType != 'READALL') and (m not in opt_list):
-            str_ignored += '\n    - ' + m.ljust(15) + str(len(d)).rjust(5) + ' elements, ' + str(len(params[m])).rjust(3) + ' params'
+            str_ignored += '\n    - ' + m.ljust(15) + str(len(d)).rjust(6) + ' elements, ' + str(len(params[m])).rjust(3) + ' params'
             continue
 
-        str_added += '\n    - ' + m.ljust(15) + str(len(d)).rjust(5) + ' elements, ' + str(len(params[m])).rjust(3) + ' params'
+        str_added += '\n    - ' + m.ljust(15) + str(len(d)).rjust(6) + ' elements, ' + str(len(params[m])).rjust(3) + ' params'
 
         output_file = output_path + m + '.csv'
         out = open(output_file, 'w')
@@ -192,16 +191,14 @@ def process(xml_file, output_path, fReadType, opt_list):
         pNames.sort()
 
         bp.extend(pNames)
-
         mycols = ','.join(bp)
+
         out.write(mycols)
         out.write('\n')
-
 
         for id,p in d.items():
             
             myvals = ''
-
             for pp in bp:
 
                 try:
@@ -210,17 +207,15 @@ def process(xml_file, output_path, fReadType, opt_list):
                     myvals += ','
 
             myvals = myvals[1:] + '\n'
-
             out.write(myvals)
                 
         out.close()
 
-
-    with open(output_path + "resultado.txt", 'w') as f:            #, encoding = 'utf-8'
-        f.write("Found Elements:\n")
+    with open(output_path + "_resultado.txt", 'w') as f:            #, encoding = 'utf-8'
+        f.write("Elements exported:\n")
         f.write(str_added)
-        f.write("\n\nIgnored Elements:\n")
+        f.write("\n\nElements ignored:\n")
         f.write(str_ignored)
 
     #print("\n  + Done!\n\n  + Ignored elements:\n" + str_ignored)
-    print("\n  + Done!\n\n  + Elements found:\n" + str_ignored)
+    print("\n  + Exported elements:\n" + str_added)
