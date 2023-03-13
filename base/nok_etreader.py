@@ -25,13 +25,13 @@ class NokiaXML(object):
 
     def getdada_p_list(self, d):
         if self.this_p in self.this_item:
-            self.this_item[self.this_list] += ';' + d
+            self.this_item[self.this_list] += '~' + d
         else:
             self.this_item[self.this_list] = d
 
     def getdada_p_item(self, d):
         if self.this_p in self.this_item:
-            self.this_item[self.this_p] += ';' + d
+            self.this_item[self.this_p] += '~' + d
         else:
             self.this_item[self.this_p] = d
 
@@ -191,7 +191,7 @@ def process(xml_file, output_path, fReadType, opt_list):
         pNames.sort()
 
         bp.extend(pNames)
-        mycols = ','.join(bp)
+        mycols = ';'.join(bp)
 
         out.write(mycols)
         out.write('\n')
@@ -202,9 +202,9 @@ def process(xml_file, output_path, fReadType, opt_list):
             for pp in bp:
 
                 try:
-                    myvals += ',' + p[pp]
+                    myvals += ';' + p[pp]
                 except:
-                    myvals += ','
+                    myvals += ';'
 
             myvals = myvals[1:] + '\n'
             out.write(myvals)

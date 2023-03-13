@@ -22,7 +22,7 @@ class begin():
         # set_window_center(self.root, 900, 600)
         self.root.update()
 
-        self.xmlfile = StringVar(value="C:\\Users\\oi399542\\Documents\\base_DUMPs\\dump_sample.xml")
+        self.xmlfile = StringVar(value="C:/C/75_dump/2G_NOK5-20230306.xml")
         self.READ_TYPE = StringVar(value="DEFAULT")
 
         self.toolbar_box = None
@@ -66,7 +66,7 @@ class begin():
 
         self.xmlFile = filedialog.askopenfilename(
             title='Open XML DUMP',
-            initialdir='/',
+            initialdir='C:/C/75_dump/',
             filetypes=filetypes)
         
         self.check_file(self.xmlFile)
@@ -105,7 +105,7 @@ class begin():
         mtime = localtime(os.path.getmtime(xml_file))
         timestamp = strftime('%Y%m%d', mtime)
 
-        caminho = os.path.dirname(xml_file) + "\\output\\"
+        caminho = os.path.dirname(xml_file) + "/output/"
         output = os.path.splitext(xml_file)[0] + ".xlsx"
 
         # Build Output Filename
@@ -146,11 +146,11 @@ def MergeCSV(origem, destino):
 
     for csvfilename in csv_list:
 
-        df = pd.read_csv(csvfilename, engine='python')     #TODO Guess field type
-        sname = csvfilename.split('\\')[-1].split('.')[0]
+        df = pd.read_csv(csvfilename, engine='python', delimiter=';')     #TODO Guess field type
+        sname = csvfilename.split('/')[-1].split('.')[0]
         print(f'    {sname} - OK')
         
         df.to_excel(writer, sheet_name=sname, index = False)
     
     print("\n# Saving output file...\n")
-    writer.save()
+    writer.close()
