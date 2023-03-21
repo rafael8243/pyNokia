@@ -7,7 +7,7 @@ class NokiaXML(object):
         self.all_mo = dict()
         self.all_p = dict()
 
-        self.set_class = set()        
+        self.set_class = set()
         self.set_p = set()
 
         self.getp = self.getdata_p

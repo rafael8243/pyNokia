@@ -12,4 +12,5 @@ def MergeCSV(origem, destino):
         df = pd.read_csv(csvfilename, engine='python', delimiter=',') 
         sname = csvfilename.split('\\')[-1].split('.')[0]
         df.to_excel(writer,sheet_name=sname, index = False)
-    writer.save()
+        
+    writer.close()

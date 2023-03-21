@@ -22,7 +22,7 @@ class begin():
         # set_window_center(self.root, 900, 600)
         self.root.update()
 
-        self.xmlfile = StringVar(value="C:/C/75_dump/2G_NOK5-20230306.xml")
+        self.xmlfile = StringVar(value="C:/C/DUMP/NOK/2G_NOK5-20230306.xml")
         self.READ_TYPE = StringVar(value="DEFAULT")
 
         self.toolbar_box = None
@@ -59,14 +59,17 @@ class begin():
 
 
     def select_file(self):
+
+        base_p = os.path.expanduser('~/Documents')
+
         filetypes = (
             ('XML files', '*.xml'),
             ('All files', '*.*')
         )
 
         self.xmlFile = filedialog.askopenfilename(
-            title='Open XML DUMP',
-            initialdir='C:/C/75_dump/',
+            title='Open XML DUMP',            
+            initialdir=base_p,
             filetypes=filetypes)
         
         self.check_file(self.xmlFile)
@@ -154,3 +157,4 @@ def MergeCSV(origem, destino):
     
     print("\n# Saving output file...\n")
     writer.close()
+    print("\n# Done!\n")
