@@ -4,9 +4,7 @@ from time import perf_counter, localtime, strftime
 from threading import Thread
 
 import tkinter as tk
-from tkinter import ttk
-from tkinter import (Button, Radiobutton, Text, Frame, IntVar, Label, 
-                     Listbox, Menu, StringVar, Tk, filedialog)
+from tkinter import (Button, Radiobutton, Text, Frame, Label, StringVar, Tk, filedialog)
 
 from base import nok_etreader as nokr
 
@@ -17,12 +15,12 @@ class begin():
 
         self.root.title('NOKIA Parser')
         self.root.resizable(False, False)
-        self.root.geometry('450x150')
+        self.root.geometry('450x360')
         
         # set_window_center(self.root, 900, 600)
         self.root.update()
 
-        self.xmlfile = StringVar(value="C:/C/DUMP/NOK/2G_NOK5-20230306.xml")
+        self.xmlFile = StringVar(value="C:/C/DUMP/NOK/2G_NOK5-20230306.xml")
         self.READ_TYPE = StringVar(value="DEFAULT")
 
         self.toolbar_box = None
@@ -50,13 +48,14 @@ class begin():
         rad_def.pack(side="right")
         rad_all.pack(side="right")
 
-        self.txt_out = Text(self.content_box, height = 10, width = 130)
-        self.txt_out.pack(side="bottom")
+        self.txt_out = Text(self.content_box, height = 19, width = 130)
+        self.txt_out.pack(side="top")
+        self.txt_out.insert(tk.END,'teste')
 
-        openfile = self.xmlfile.get()
-        self.lbl_file = Label(self.content_box, text=openfile).pack(side="bottom")
+        self.xmlFile.get()
 
-
+    def print_box(self, s):
+        self.txt_out.insert(tk.END, s)
 
     def select_file(self):
 
@@ -70,32 +69,36 @@ class begin():
         self.xmlFile = filedialog.askopenfilename(
             title='Open XML DUMP',            
             initialdir=base_p,
-            filetypes=filetypes)
-        
-        self.check_file(self.xmlFile)
+            filetypes=filetypes)        
+
+        self.check_file()
 
         self.fread_type = self.READ_TYPE.get()
-        self.print_box(f'\n# Processing: {self.fread_type}')
-        self.read_file(self.xmlFile)
+        self.print_box(f'\n\n# Processing: {self.fread_type}')
+        self.lbl_file = Label(self.content_box, text=self.xmlFile).pack(side="bottom")
 
+        self.threading_read()
 
-    def print_box(self, s):
-        self.txt_out.insert(tk.END, s)
+    def check_file(self):
 
+        path_split = os.path.split(self.xmlFile)
 
-    def check_file(self, xml_file):
-
-        path_split = os.path.split(xml_file)
-
-        if os.path.exists(xml_file):
-            xml_size = round(os.stat(xml_file).st_size / (1024 * 1024),2)
+        if os.path.exists(self.xmlFile):
+            xml_size = round(os.stat(self.xmlFile).st_size / (1024 * 1024),2)
             self.print_box(f'\n# Source file:\n  + {path_split[1]} ({xml_size} MB)')
 
         else:
-            self.print_box(f'\n# File NOT found:\n  + {xml_file}')
+            self.print_box(f'\n# File NOT found:\n  + {self.xmlFile}')
             quit()
 
-    def read_file(self, xml_file):
+
+    def threading_read(self):
+        # Call work function
+        t1=Thread(target=self.read_file)
+        t1.start()
+        
+
+    def read_file(self):
 
         tm_start = perf_counter()
         
@@ -105,20 +108,20 @@ class begin():
         'MAL', 'TRX', 'BCF', 'ADJL', 'DAP', 'BTS', 'CSDAP', 'ADCE', 'ADJW', 'BAL',
         'BSC', 'LNMME','MOPR']
 
-        mtime = localtime(os.path.getmtime(xml_file))
+        mtime = localtime(os.path.getmtime(self.xmlFile))
         timestamp = strftime('%Y%m%d', mtime)
 
-        caminho = os.path.dirname(xml_file) + "/output/"
-        output = os.path.splitext(xml_file)[0] + ".xlsx"
+        caminho = os.path.dirname(self.xmlFile) + "/output/"
+        output = os.path.splitext(self.xmlFile)[0] + ".xlsx"
 
         # Build Output Filename
         i = 0
         while os.path.exists(output):
             i = i + 1
-            output = os.path.splitext(xml_file)[0] + " (" + str(i) + ").xlsx"    
+            output = os.path.splitext(self.xmlFile)[0] + " (" + str(i) + ").xlsx"    
 
         # Read and export selected elements 
-        nokr.process(xml_file, caminho, self.fread_type, default_list)
+        nokr.process(self.xmlFile, caminho, self.fread_type, default_list)
 
         tm_parse = perf_counter()
         self.print_box('\n# Merging data...')
@@ -129,13 +132,13 @@ class begin():
         te_parse = round(tm_parse - tm_start , 2)
         te_merge = round(tm_merge - tm_parse , 2)
 
-        self.print_box(f'  Read : {te_parse:7.2f} s')
-        self.print_box(f'  Merge: {te_merge:7.2f} s')
+        self.print_box(f'\n\n  Read : {te_parse:7.2f} s\n')
+        self.print_box(f'  Merge: {te_merge:7.2f} s\n')
 
         te_all = round(tm_merge - tm_start , 2)
-        self.print_box(f'         ----------\n    Total: {te_all:7.2f} s')
+        self.print_box(f'         ----------\n  Total: {te_all:7.2f} s')
 
-        self.print_box("\n# Finished!\n\n  ==> " + output)
+        self.print_box("\n\n# Finished!\n  = " + output)
 
 
 def MergeCSV(origem, destino):
@@ -143,7 +146,7 @@ def MergeCSV(origem, destino):
     files = os.listdir(origem)
     csv_list = [origem + i for i in files if i.endswith('.csv')]
 
-    print(f"  + Found {len(csv_list)} element types:\n")
+    print(f"\n# Saving output file...\n")
 
     writer = pd.ExcelWriter(destino) # Arbitrary output name
 
@@ -155,6 +158,5 @@ def MergeCSV(origem, destino):
         
         df.to_excel(writer, sheet_name=sname, index = False)
     
-    print("\n# Saving output file...\n")
     writer.close()
     print("\n# Done!\n")

@@ -1,4 +1,4 @@
-from csv import excel_tab
+
 import lxml.etree as ET
 
 class NokiaXML(object):

@@ -1,6 +1,4 @@
-import os
 from tkinter import Tk
-
 from base import app_view
 
 class App(Tk):
