@@ -102,11 +102,11 @@ class begin():
 
         tm_start = perf_counter()
         
-        default_list = ['LNCEL_FDD', 'LNBTS', 'LNADJ', 'LNCEL', 'IRFIM', 'SIB', 'LNADJL', 
-        'LNADJW', 'LNADJG', 'LNHOIF', 'CAREL', 'LNBTS_FDD', 'ADJI', 'WBTS', 'ADJS', 
-        'ADJD', 'WCEL', 'FMCS', 'HOPS', 'COCO', 'ADJG', 'ADJL', 'RNC', 'LAPD', 
-        'MAL', 'TRX', 'BCF', 'ADJL', 'DAP', 'BTS', 'CSDAP', 'ADCE', 'ADJW', 'BAL',
-        'BSC', 'LNMME','MOPR']
+        default_list = ['LNCEL_FDD', 'LNBTS', 'LNADJ', 'LNCEL', 'IRFIM', 'SIB', 'LNADJL',
+                        'LNADJW', 'LNADJG', 'LNHOIF', 'CAREL', 'LNBTS_FDD', 'ADJI', 'WBTS', 'ADJS', 
+                        'ADJD', 'WCEL', 'FMCS', 'HOPS', 'COCO', 'ADJG', 'ADJL', 'RNC', 'LAPD', 
+                        'MAL', 'TRX', 'BCF', 'ADJL', 'DAP', 'BTS', 'CSDAP', 'ADCE', 'ADJW', 'BAL',
+                        'BSC', 'LNMME','MOPR']
 
         mtime = localtime(os.path.getmtime(self.xmlFile))
         timestamp = strftime('%Y%m%d', mtime)
