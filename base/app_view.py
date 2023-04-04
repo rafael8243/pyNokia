@@ -71,7 +71,7 @@ class begin():
             initialdir=base_p,
             filetypes=filetypes)        
 
-        self.check_file()
+        self.check_file()       
 
         self.fread_type = self.READ_TYPE.get()
         self.print_box(f'\n\n# Processing: {self.fread_type}')
@@ -114,11 +114,18 @@ class begin():
         caminho = os.path.dirname(self.xmlFile) + "/output/"
         output = os.path.splitext(self.xmlFile)[0] + ".xlsx"
 
+        # Limpa parta temporária de saída
+        old_files = os.listdir(caminho)
+
+        for f in old_files:
+            if f.endswith(".csv"):
+                os.remove(os.path.join(caminho, f))
+
         # Build Output Filename
         i = 0
         while os.path.exists(output):
             i = i + 1
-            output = os.path.splitext(self.xmlFile)[0] + " (" + str(i) + ").xlsx"    
+            output = os.path.splitext(self.xmlFile)[0] + " (" + str(i) + ").xlsx"
 
         # Read and export selected elements 
         nokr.process(self.xmlFile, caminho, self.fread_type, default_list)

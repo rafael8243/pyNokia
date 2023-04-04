@@ -37,15 +37,15 @@ class NokiaXML(object):
 
 
     # INICIO DO PARAMETRO
-    def start_p(self, n):
+    def start_p(self, n: str):
         self.this_p = n
         self.set_p.add(self.this_p)
 
-    def start_p_list(self):
+    def start_p_list(self, n = ''):
         self.this_p = self.this_list
         self.set_p.add(self.this_p)
 
-    def start_p_item(self, n):
+    def start_p_item(self, n: str):
         self.this_p = self.this_list + '_' + n
 
 
@@ -59,7 +59,7 @@ class NokiaXML(object):
                 self.mtype.append('p')
 
                 try:
-                    self.startp(str(attrib['name']))
+                    self.startp(attrib.get('name'))
                 except:
                     self.startp() # P sem LIST
                 
@@ -174,6 +174,7 @@ def process(xml_file, output_path, fReadType, opt_list):
 
     for m,d in results.items():
 
+        # Filtra o tipo de Export desejado
         if (fReadType != 'READALL') and (m not in opt_list):
             str_ignored += '\n    - ' + m.ljust(15) + str(len(d)).rjust(6) + ' elements, ' + str(len(params[m])).rjust(3) + ' params'
             continue
@@ -183,16 +184,21 @@ def process(xml_file, output_path, fReadType, opt_list):
         output_file = output_path + m + '.csv'
         out = open(output_file, 'w')
 
+        ## Organizar em ordem alfabética:
+        # Encontrar a coluna com o primeiro parâmetro
         pList = params[m]
         ibp = pList.index('ID') + 1
 
-        bp = pList[:ibp] 
+        # Classificar os parâmetros em ordem alfabética
+        bp = pList[:ibp]
         pNames = pList[ibp:]
         pNames.sort()
 
+        # Restaura lista de colunas completa
         bp.extend(pNames)
         mycols = ';'.join(bp)
 
+        # Grava os títulos das colunas
         out.write(mycols)
         out.write('\n')
 
@@ -202,7 +208,7 @@ def process(xml_file, output_path, fReadType, opt_list):
             for pp in bp:
 
                 try:
-                    myvals += ';' + p[pp]
+                    myvals += ';' + p.get(pp,'')
                 except:
                     myvals += ';'
 
