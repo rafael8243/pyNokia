@@ -22,6 +22,7 @@ class begin():
 
         self.xmlFile = StringVar(value="C:/C/DUMP/NOK/2G_NOK5-20230306.xml")
         self.READ_TYPE = StringVar(value="DEFAULT")
+        self._base_p = os.path.expanduser('~/Documents')
 
         self.toolbar_box = None
         self.content_box = None
@@ -59,8 +60,6 @@ class begin():
 
     def select_file(self):
 
-        base_p = os.path.expanduser('~/Documents')
-
         filetypes = (
             ('XML files', '*.xml'),
             ('All files', '*.*')
@@ -68,7 +67,7 @@ class begin():
 
         self.xmlFile = filedialog.askopenfilename(
             title='Open XML DUMP',            
-            initialdir=base_p,
+            initialdir=self._base_p,
             filetypes=filetypes)        
 
         self.check_file()       
@@ -84,6 +83,7 @@ class begin():
         path_split = os.path.split(self.xmlFile)
 
         if os.path.exists(self.xmlFile):
+            self._base_p = os.chdir(path_split[0]) # Change base directory to last used
             xml_size = round(os.stat(self.xmlFile).st_size / (1024 * 1024),2)
             self.print_box(f'\n# Source file:\n  + {path_split[1]} ({xml_size} MB)')
 
