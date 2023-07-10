@@ -20,6 +20,7 @@ class begin():
         # set_window_center(self.root, 900, 600)
         self.root.update()
 
+        # Default Values
         self.xmlFile = StringVar(value="C:/C/DUMP/NOK/2G_NOK5-20230306.xml")
         self.READ_TYPE = StringVar(value="DEFAULT")
         self._base_p = os.path.expanduser('~/Documents')
@@ -27,18 +28,22 @@ class begin():
         self.toolbar_box = None
         self.content_box = None
 
+        # Build interface
         self.init_view()
+
+        # Wait for XML File
+        self.xmlFile.get()
 
     def init_view(self):
         """Build interface"""
 
         # Frame 1
-        self.toolbar_box = Frame(self.root, relief="ridge", bd=1)
-        self.toolbar_box.pack(fill="x", expand=None, side="top", anchor="n")
+        self.toolbar_box = Frame(self.root, relief="ridge", bd=0)
+        self.toolbar_box.pack(fill="x", expand=None, side="top", anchor="n", padx=10, pady=(10,0))
 
         # Frame 2        
-        self.content_box = Frame(self.root, relief="ridge", bd=1)
-        self.content_box.pack(fill="x", expand=None, side="bottom", anchor="n")        
+        self.content_box = Frame(self.root, relief="ridge", bd=0)
+        self.content_box.pack(fill="x", expand=None, side="bottom", anchor="n")
 
         btn_open = Button(self.toolbar_box, text="Open XML")
         btn_open["command"] = self.select_file
@@ -50,10 +55,8 @@ class begin():
         rad_all.pack(side="right")
 
         self.txt_out = Text(self.content_box, height = 19, width = 130)
-        self.txt_out.pack(side="top")
+        self.txt_out.pack(side="top", padx=10, pady=10)
         self.txt_out.insert(tk.END,'teste')
-
-        self.xmlFile.get()
 
     def print_box(self, s):
         self.txt_out.insert(tk.END, s)
@@ -74,7 +77,7 @@ class begin():
 
         self.fread_type = self.READ_TYPE.get()
         self.print_box(f'\n\n# Processing: {self.fread_type}')
-        self.lbl_file = Label(self.content_box, text=self.xmlFile).pack(side="bottom")
+        #self.lbl_file = Label(self.content_box, text=self.xmlFile).pack(side="bottom")
 
         self.threading_read()
 
