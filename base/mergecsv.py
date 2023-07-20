@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-def MergeCSV(origem, destino):
+def ext_MergeCSV(origem, destino):
 
     csv_list = [origem + f for f in os.listdir(origem)]
 

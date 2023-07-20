@@ -68,12 +68,12 @@ class begin():
             ('All files', '*.*')
         )
 
-        self.xmlFile = filedialog.askopenfilename(
+        self.xmlFiles = filedialog.askopenfilenames(
             title='Open XML DUMP',            
             initialdir=self._base_p,
-            filetypes=filetypes)        
+            filetypes=filetypes)
 
-        self.check_file()       
+        self.check_file()
 
         self.fread_type = self.READ_TYPE.get()
         self.print_box(f'\n\n# Processing: {self.fread_type}')
@@ -83,16 +83,18 @@ class begin():
 
     def check_file(self):
 
-        path_split = os.path.split(self.xmlFile)
+        for i in range(len(self.xmlFiles)):
+            path_split = os.path.split(self.xmlFiles[i])
 
-        if os.path.exists(self.xmlFile):
-            self._base_p = os.chdir(path_split[0]) # Change base directory to last used
-            xml_size = round(os.stat(self.xmlFile).st_size / (1024 * 1024),2)
-            self.print_box(f'\n# Source file:\n  + {path_split[1]} ({xml_size} MB)')
+            if os.path.exists(self.xmlFiles[i]):
+                self._base_p = os.chdir(path_split[0]) # Change base directory to last used
+                xml_size = round(os.stat(self.xmlFiles[i]).st_size / (1024 * 1024),2)
+                self.print_box(f'\n# Source file:\n  + {path_split} ({xml_size} MB)')
 
-        else:
-            self.print_box(f'\n# File NOT found:\n  + {self.xmlFile}')
-            quit()
+            else:
+                self.print_box(f'\n# File NOT found:\n  + {self.xmlFile[i]}')
+        
+        return
 
 
     def threading_read(self):
@@ -111,7 +113,7 @@ class begin():
                         'COCO', 'ADJG', 'ADJL', 'RNC', 'LAPD', 'MAL', 'TRX', 
                         'BCF', 'DAP', 'BTS', 'ADCE', 'ADJW', 'BAL', 'BSC']
 
-        mtime = localtime(os.path.getmtime(self.xmlFile))
+        mtime = localtime(os.path.getmtime(self.xmlFile)) #TODO CONTINUAR
         timestamp = strftime('%Y%m%d', mtime)
 
         caminho = os.path.dirname(self.xmlFile) + "/output/"
