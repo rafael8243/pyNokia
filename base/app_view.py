@@ -89,7 +89,7 @@ class begin():
             if os.path.exists(self.root.xml_files_path[i]):
                 self.root.base_path = os.chdir(path_split[0]) # Change base directory to last used
                 xml_size = round(os.stat(self.root.xml_files_path[i]).st_size / (1024 * 1024),2)
-                self.print_box(f'\n# Source file:\n  + {path_split} ({xml_size} MB)')
+                self.print_box(f'\n# Source file:\n  + {path_split[1]} ({xml_size} MB)')
                 return True
 
             else:
@@ -109,7 +109,7 @@ class begin():
         tm_start = perf_counter()
         
         default_list = ['LNCEL_FDD', 'LNBTS', 'LNCEL', 'IRFIM', 'SIB', 'LNMME','MOPR',
-                        'LNADJW', 'LNADJG', 'LNHOIF', 'CAREL', 'LNBTS_FDD', 
+                        'LNADJW', 'LNADJG', 'LNHOIF', 'CAREL', 'LNBTS_FDD', 'WNCELG', 'WNBTS',
                         'ADJI', 'WBTS', 'ADJS', 'ADJD', 'WCEL', 'FMCS', 'HOPS', 
                         'COCO', 'ADJG', 'ADJL', 'RNC', 'LAPD', 'MAL', 'TRX', 
                         'BCF', 'DAP', 'BTS', 'ADCE', 'ADJW', 'BAL', 'BSC']
@@ -131,7 +131,7 @@ class begin():
         i = 0
         while os.path.exists(output):
             i = i + 1
-            output = os.path.splitext(self.xml_file_path)[0] + " (" + str(i) + ").xlsx"
+            output = os.path.splitext(self.root.xml_files_path[0])[0] + " (" + str(i) + ").xlsx"
 
         # Read and export selected elements 
         nokr.process(self.root.xml_files_path, caminho, self.fread_type, default_list)
@@ -165,7 +165,7 @@ def MergeCSV(origem, destino):
 
     for csvfilename in csv_list:
 
-        df = pd.read_csv(csvfilename, engine='python', delimiter=';')     #TODO Guess field type
+        df = pd.read_csv(csvfilename, engine='python', delimiter=';', encoding='iso-8859-1')     #TODO Guess field type
         sname = csvfilename.split('/')[-1].split('.')[0]
         print(f'    {sname} - OK')
         

@@ -168,9 +168,13 @@ def process(xml_files, output_path, fReadType, opt_list):
     str_added = ''
     
     parser = ET.XMLParser(target = NokiaXML())
-    results, params = ET.parse(xml_files[0], parser)
-    ET.parse(xml_files[1], parser)
+
+    for this_xml in xml_files:
+        ET.parse(this_xml, parser)
     
+    results = parser.target.all_mo
+    params = parser.target.all_p
+
     print("\n# Exporting elements...")
 
     for m,d in results.items():
