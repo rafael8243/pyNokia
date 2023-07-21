@@ -86,7 +86,7 @@ class NokiaXML(object):
                 
                 # Primeiro parâmetro
                 self.this_mo = {'DN': self.mo_dn}
-                self.set_p = {'DN'}
+                self.set_p.add('DN')
 
                 sdn = self.mo_dn.split('/')
                 for pdn in sdn[1:]:
@@ -162,14 +162,15 @@ class NokiaXML(object):
         return self.all_mo, self.all_p
 
 
-def process(xml_file, output_path, fReadType, opt_list):
+def process(xml_files, output_path, fReadType, opt_list):
 
     str_ignored = ''
     str_added = ''
     
     parser = ET.XMLParser(target = NokiaXML())
-    results, params = ET.parse(xml_file, parser)
-
+    results, params = ET.parse(xml_files[0], parser)
+    ET.parse(xml_files[1], parser)
+    
     print("\n# Exporting elements...")
 
     for m,d in results.items():

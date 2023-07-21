@@ -10,20 +10,18 @@ from base import nok_etreader as nokr
 
 class begin():
 
-    def __init__(self, master):
+    def __init__(self, master):        
         self.root = master
 
         self.root.title('NOKIA Parser')
         self.root.resizable(False, False)
         self.root.geometry('450x360')
-        
-        # set_window_center(self.root, 900, 600)
         self.root.update()
 
         # Default Values
-        self.xmlFile = StringVar(value="C:/C/DUMP/NOK/2G_NOK5-20230306.xml")
+        self.xml_file_path = StringVar(value="C:/C/DUMP/NOK/2G_NOK5-20230306.xml")
         self.READ_TYPE = StringVar(value="DEFAULT")
-        self._base_p = os.path.expanduser('~/Documents')
+        self.root.base_path = os.path.expanduser('~/Documents')
 
         self.toolbar_box = None
         self.content_box = None
@@ -32,11 +30,12 @@ class begin():
         self.init_view()
 
         # Wait for XML File
-        self.xmlFile.get()
+        self.xml_file_path.get()
+
 
     def init_view(self):
         """Build interface"""
-
+        
         # Frame 1
         self.toolbar_box = Frame(self.root, relief="ridge", bd=0)
         self.toolbar_box.pack(fill="x", expand=None, side="top", anchor="n", padx=10, pady=(10,0))
@@ -68,33 +67,35 @@ class begin():
             ('All files', '*.*')
         )
 
-        self.xmlFiles = filedialog.askopenfilenames(
+        self.root.xml_files_path = filedialog.askopenfilenames(
             title='Open XML DUMP',            
-            initialdir=self._base_p,
+            initialdir=self.root.base_path,
             filetypes=filetypes)
 
-        self.check_file()
+        if self.check_file():
 
-        self.fread_type = self.READ_TYPE.get()
-        self.print_box(f'\n\n# Processing: {self.fread_type}')
-        #self.lbl_file = Label(self.content_box, text=self.xmlFile).pack(side="bottom")
+            self.fread_type = self.READ_TYPE.get()
+            self.print_box(f'\n\n# Processing: {self.fread_type}')
+            #self.lbl_file = Label(self.content_box, text=self.xml_file_path).pack(side="bottom")
 
-        self.threading_read()
+            self.threading_read()
+        
 
-    def check_file(self):
+    def check_file(self) -> bool:
 
-        for i in range(len(self.xmlFiles)):
-            path_split = os.path.split(self.xmlFiles[i])
+        for i in range(len(self.root.xml_files_path)):
+            path_split = os.path.split(self.root.xml_files_path[i])
 
-            if os.path.exists(self.xmlFiles[i]):
-                self._base_p = os.chdir(path_split[0]) # Change base directory to last used
-                xml_size = round(os.stat(self.xmlFiles[i]).st_size / (1024 * 1024),2)
+            if os.path.exists(self.root.xml_files_path[i]):
+                self.root.base_path = os.chdir(path_split[0]) # Change base directory to last used
+                xml_size = round(os.stat(self.root.xml_files_path[i]).st_size / (1024 * 1024),2)
                 self.print_box(f'\n# Source file:\n  + {path_split} ({xml_size} MB)')
+                return True
 
             else:
-                self.print_box(f'\n# File NOT found:\n  + {self.xmlFile[i]}')
+                self.print_box(f'\n# File NOT found:\n  + {self.root.xml_files_path[i]}')
+                return False
         
-        return
 
 
     def threading_read(self):
@@ -113,11 +114,11 @@ class begin():
                         'COCO', 'ADJG', 'ADJL', 'RNC', 'LAPD', 'MAL', 'TRX', 
                         'BCF', 'DAP', 'BTS', 'ADCE', 'ADJW', 'BAL', 'BSC']
 
-        mtime = localtime(os.path.getmtime(self.xmlFile)) #TODO CONTINUAR
+        mtime = localtime(os.path.getmtime(self.root.xml_files_path[0])) #TODO CONTINUAR
         timestamp = strftime('%Y%m%d', mtime)
 
-        caminho = os.path.dirname(self.xmlFile) + "/output/"
-        output = os.path.splitext(self.xmlFile)[0] + ".xlsx"
+        caminho = os.path.dirname(self.root.xml_files_path[0]) + "/output/"
+        output = os.path.splitext(self.root.xml_files_path[0])[0] + ".xlsx"
 
         # Limpa parta temporária de saída
         old_files = os.listdir(caminho)
@@ -130,10 +131,10 @@ class begin():
         i = 0
         while os.path.exists(output):
             i = i + 1
-            output = os.path.splitext(self.xmlFile)[0] + " (" + str(i) + ").xlsx"
+            output = os.path.splitext(self.xml_file_path)[0] + " (" + str(i) + ").xlsx"
 
         # Read and export selected elements 
-        nokr.process(self.xmlFile, caminho, self.fread_type, default_list)
+        nokr.process(self.root.xml_files_path, caminho, self.fread_type, default_list)
 
         tm_parse = perf_counter()
         self.print_box('\n# Merging data...')
