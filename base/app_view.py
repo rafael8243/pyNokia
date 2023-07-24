@@ -10,7 +10,7 @@ from base import nok_etreader as nokr
 
 class begin():
 
-    def __init__(self, master):        
+    def __init__(self, master):
         self.root = master
 
         self.root.title('NOKIA Parser')
@@ -40,7 +40,7 @@ class begin():
         self.toolbar_box = Frame(self.root, relief="ridge", bd=0)
         self.toolbar_box.pack(fill="x", expand=None, side="top", anchor="n", padx=10, pady=(10,0))
 
-        # Frame 2        
+        # Frame 2
         self.content_box = Frame(self.root, relief="ridge", bd=0)
         self.content_box.pack(fill="x", expand=None, side="bottom", anchor="n")
 
@@ -68,7 +68,7 @@ class begin():
         )
 
         self.root.xml_files_path = filedialog.askopenfilenames(
-            title='Open XML DUMP',            
+            title='Open XML DUMP',
             initialdir=self.root.base_path,
             filetypes=filetypes)
 
@@ -79,7 +79,8 @@ class begin():
             #self.lbl_file = Label(self.content_box, text=self.xml_file_path).pack(side="bottom")
 
             self.threading_read()
-        
+            print("sair2")
+
 
     def check_file(self) -> bool:
 
@@ -95,19 +96,19 @@ class begin():
             else:
                 self.print_box(f'\n# File NOT found:\n  + {self.root.xml_files_path[i]}')
                 return False
-        
+
 
 
     def threading_read(self):
         # Call work function
         t1=Thread(target=self.read_file)
         t1.start()
-        
+
 
     def read_file(self):
 
         tm_start = perf_counter()
-        
+
         default_list = ['LNCEL_FDD', 'LNBTS', 'LNCEL', 'IRFIM', 'SIB', 'LNMME','MOPR',
                         'LNADJW', 'LNADJG', 'LNHOIF', 'CAREL', 'LNBTS_FDD', 'WNCELG', 'WNBTS',
                         'ADJI', 'WBTS', 'ADJS', 'ADJD', 'WCEL', 'FMCS', 'HOPS', 
@@ -139,7 +140,7 @@ class begin():
         tm_parse = perf_counter()
         self.print_box('\n# Merging data...')
 
-        MergeCSV(caminho, output)
+        MergeCSV(caminho, output, self.root)
 
         tm_merge = perf_counter()
         te_parse = round(tm_parse - tm_start , 2)
