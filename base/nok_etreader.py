@@ -157,9 +157,8 @@ class NokiaXML(object):
         if self.mtype[-1] == 'p':
             self.getp(data)
 
-    def close(self):
-        print("  + Done: %d elements found." % self.n)
-        return self.all_mo, self.all_p
+    def close(self):        
+        return self.n
 
 
 def process(xml_files, output_path, fReadType, opt_list):
@@ -169,8 +168,10 @@ def process(xml_files, output_path, fReadType, opt_list):
     
     parser = ET.XMLParser(target = NokiaXML())
 
+    print(f"\n# Reading:" )
     for this_xml in xml_files:
-        ET.parse(this_xml, parser)
+        n = ET.parse(this_xml, parser)
+        print(f"  + {n} elements found in {this_xml}." )
     
     results = parser.target.all_mo
     params = parser.target.all_p
