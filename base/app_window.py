@@ -1,5 +1,6 @@
 
 import tkinter as tk
+from tkinter import filedialog as tkfd
 
 class reader_window(tk.Tk):
     def __init__(self, app):
@@ -44,18 +45,14 @@ class reader_window(tk.Tk):
             ('All files', '*.*')
         )
 
-        xml_files_path = tk.filedialog.askopenfilenames(
-            title='Open XML DUMP',
-            initialdir=self._app.base_path,
-            filetypes=filetypes)
+        xml_files_path = tkfd.askopenfilenames(
+            title='Open XML DUMP', 
+            filetypes=filetypes, 
+            initialdir=self._app.base_path)
 
         if self._app.check_file(xml_files_path):
+            txt = '\n'.join(self._app.xml_files_info)
+            self.print_box(txt)
 
-            txt = [f'\n - {x}' for x in self._app.xml_files_info]
-            self.print_box(txt[0])
-            
             self.print_box(f'\n\n# Processing: {self._app.READ_TYPE}')
-            #self.lbl_file = Label(self.content_box, text=self.xml_file_path).pack(side="bottom")
-
             self._app.threading_read()
-            print("sair2")
