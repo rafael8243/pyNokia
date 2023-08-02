@@ -11,7 +11,7 @@ class nokia_parser:
 
         self.base_path = os.path.expanduser('~/Documents')
 
-        self.xml_files_path = "C:/C/DUMP/NOK/2G_NOK5-20230306.xml"                
+        self.xml_files_path = []
         self.xml_files_info = []
         
         self.READ_TYPE = "DEFAULT"
@@ -19,21 +19,23 @@ class nokia_parser:
     
     def check_file(self, input_files) -> bool:
 
+        self.xml_files_info.append(f'# Source file(s):')
+
         for i in range(len(input_files)):
             path_split = os.path.split(input_files[i])
 
             if os.path.exists(input_files[i]):
                 self.base_path = os.chdir(path_split[0]) # Change base directory to last used
-                self.xml_files_path = input_files #save file paths
+                xml_size = round(os.stat(input_files[i]).st_size / (1024 * 1024),2)                
 
-                xml_size = round(os.stat(self.xml_files_path[i]).st_size / (1024 * 1024),2)
-                self.xml_files_info.append(f'Found {path_split[1]} ({xml_size} MB)')
-
-                return True
+                self.xml_files_info.append(f' - {path_split[1]} ({xml_size} MB)')            
 
             else:
-                self.xml_files_info.append(f'Not Found {path_split[1]}')
+                self.xml_files_info.append(f' - File Not Found: {path_split[1]}')
                 return False
+        
+        self.xml_files_path = input_files
+        return True
 
 
     def threading_read(self):
@@ -52,11 +54,16 @@ class nokia_parser:
                         'COCO', 'ADJG', 'ADJL', 'RNC', 'LAPD', 'MAL', 'TRX', 
                         'BCF', 'DAP', 'BTS', 'ADCE', 'ADJW', 'BAL', 'BSC']
 
-        mtime = localtime(os.path.getmtime(self.xml_files_path[0])) #TODO CONTINUAR
+        mtime = localtime(os.path.getmtime(self.xml_files_path[0]))
         timestamp = strftime('%Y%m%d', mtime)
+        print(timestamp) #TODO teste
 
         caminho = os.path.dirname(self.xml_files_path[0]) + "/output/"
-        output = os.path.splitext(self.xml_files_path[0])[0] + ".xlsx"
+        base_output_file = os.path.splitext(self.xml_files_path[0])[0] + ".xlsx"
+
+        if len(self.xml_files_path) > 1:
+            base_output_file = base_output_file.replace("NOK?","DUMP")
+
 
         # Limpa parta temporária de saída
         old_files = os.listdir(caminho)
@@ -67,17 +74,17 @@ class nokia_parser:
 
         # Build Output Filename
         i = 0
-        while os.path.exists(output):
+        while os.path.exists(base_output_file):
             i = i + 1
-            output = os.path.splitext(self.xml_files_path[0])[0] + " (" + str(i) + ").xlsx"
+            output_file = base_output_file + " (" + str(i) + ").xlsx"
 
         # Read and export selected elements 
-        nokr.process(self.xml_files_path, caminho, self.fread_type, default_list)
+        nokr.process(self.xml_files_path, caminho, self.READ_TYPE, default_list)
 
-        tm_parse = perf_counter()
-        self.print_box('\n# Merging data...')
+        tm_parse = perf_counter() 
+        self.print_box('\n# Merging data...') #TODO continuar daqui
 
-        MergeCSV(caminho, output, self.root)
+        #MergeCSV(caminho, output, self.root)
 
         tm_merge = perf_counter()
         te_parse = round(tm_parse - tm_start , 2)
@@ -89,4 +96,4 @@ class nokia_parser:
         te_all = round(tm_merge - tm_start , 2)
         self.print_box(f'         ----------\n  Total: {te_all:7.2f} s')
 
-        self.print_box("\n\n# Finished!\n  = " + output)
+        self.print_box("\n\n# Finished!\n  = " + output_file)

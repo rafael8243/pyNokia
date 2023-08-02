@@ -171,7 +171,7 @@ def process(xml_files, output_path, fReadType, opt_list):
     print(f"\n# Reading:" )
     for this_xml in xml_files:
         n = ET.parse(this_xml, parser)
-        print(f"  + {n} elements found in {this_xml}." )
+        print(f"  + {n} elements found in {this_xml}" )
     
     results = parser.target.all_mo
     params = parser.target.all_p
