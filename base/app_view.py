@@ -71,9 +71,12 @@ class begin():
             title='Open XML DUMP',
             initialdir=self.root.base_path,
             filetypes=filetypes)
+        
+        if len(self.root.xml_files_path) == 0:
+            print('No file selected')
+            return
 
         if self.check_file():
-
             self.fread_type = self.READ_TYPE.get()
             self.print_box(f'\n\n# Processing: {self.fread_type}')
             #self.lbl_file = Label(self.content_box, text=self.xml_file_path).pack(side="bottom")
@@ -84,19 +87,22 @@ class begin():
 
     def check_file(self) -> bool:
 
+        self.print_box(f'\n# Source file(s):')
+
         for i in range(len(self.root.xml_files_path)):
             path_split = os.path.split(self.root.xml_files_path[i])
 
             if os.path.exists(self.root.xml_files_path[i]):
                 self.root.base_path = os.chdir(path_split[0]) # Change base directory to last used
                 xml_size = round(os.stat(self.root.xml_files_path[i]).st_size / (1024 * 1024),2)
-                self.print_box(f'\n# Source file:\n  + {path_split[1]} ({xml_size} MB)')
-                return True
+                self.print_box(f'\n  - {path_split[1]} ({xml_size} MB)')
 
             else:
-                self.print_box(f'\n# File NOT found:\n  + {self.root.xml_files_path[i]}')
+                self.print_box(f'\n  - Not found: {self.root.xml_files_path[i]}!')
                 return False
-
+        
+        return True
+        
 
 
     def threading_read(self):
@@ -152,7 +158,7 @@ class begin():
         te_all = round(tm_merge - tm_start , 2)
         self.print_box(f'         ----------\n  Total: {te_all:7.2f} s')
 
-        self.print_box("\n\n# Finished!\n  = " + output)
+        self.print_box("\n\n# Finished!\n  = " + output + "\n")
 
 
 def MergeCSV(origem, destino):
