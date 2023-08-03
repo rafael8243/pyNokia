@@ -19,7 +19,7 @@ class nokia_parser:
     
     def check_file(self, input_files) -> bool:
 
-        self.xml_files_info.append(f'# Source file(s):')
+        self.xml_files_info.append(f'# Source file(s):\n')
 
         for i in range(len(input_files)):
             path_split = os.path.split(input_files[i])
@@ -60,6 +60,7 @@ class nokia_parser:
 
         caminho = os.path.dirname(self.xml_files_path[0]) + "/output/"
         base_output_file = os.path.splitext(self.xml_files_path[0])[0] + ".xlsx"
+        output_file = base_output_file
 
         if len(self.xml_files_path) > 1:
             base_output_file = base_output_file.replace("NOK?","DUMP")
@@ -74,7 +75,8 @@ class nokia_parser:
 
         # Build Output Filename
         i = 0
-        while os.path.exists(base_output_file):
+        
+        while os.path.exists(output_file):
             i = i + 1
             output_file = base_output_file + " (" + str(i) + ").xlsx"
 
