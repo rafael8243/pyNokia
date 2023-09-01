@@ -4,6 +4,8 @@ import lxml.etree as ET
 class NokiaXML(object):
     def __init__(self):
 
+        self.xmlFile = ''
+
         self.all_mo = dict()
         self.all_p = dict()
 
@@ -85,8 +87,12 @@ class NokiaXML(object):
                 self.mo_dn = attrib['distName']
                 
                 # Primeiro parâmetro
-                self.this_mo = {'DN': self.mo_dn}
+                self.this_mo = {'xmlfile': self.xmlFile}
+                self.set_p.add('xmlfile')
+
+                self.this_mo['DN'] = self.mo_dn
                 self.set_p.add('DN')
+
 
                 sdn = self.mo_dn.split('/')
                 for pdn in sdn[1:]:
@@ -170,6 +176,7 @@ def process(xml_files, output_path, fReadType, opt_list):
 
     print(f"\n# Reading:" )
     for this_xml in xml_files:
+        parser.target.xmlFile = this_xml.split("/")[-1][:-4] # Nome do arquivo XML
         n = ET.parse(this_xml, parser)
         print(f"  + {n} elements found in {this_xml}." )
     

@@ -175,7 +175,7 @@ def MergeCSV(origem, destino):
         sname = csvfilename.split('/')[-1].split('.')[0]
         print(f'    {sname} - OK')
         
-        df.to_excel(writer, sheet_name=sname, index = False)
+        df.to_excel(writer, sheet_name=sname, index=False)
     
     writer.close()
     print("\n# Done!\n")
