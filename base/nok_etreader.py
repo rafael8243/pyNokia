@@ -183,16 +183,27 @@ def process(xml_files, output_path, fReadType, opt_list):
     results = parser.target.all_mo
     params = parser.target.all_p
 
+    params_mini = {
+        'BSC':['name'],
+        'RNC':['name'],
+        'BTS':['nwName','adminState','angle','antennaHopping','bsIdentityCodeBCC','bsIdentityCodeNCC','btsIsHopping','cellBarred','cellId','dedicatedGPRScapacity','defaultGPRScapacity','egprsEnabled','fastReturnToLTE','fddQMin','fddQOffset','gprsEnabled','gsmPriority','hoppingMode','hoppingSequenceNumber1','locationAreaIdLAC','maioOffset','maioStep','msMaxDistInCallSetup','nsei','pcuIdentifier','penaltyTime','psei','qSearchI','qSearchP','rxLevAccessMin','timerPeriodicUpdateMs','usedMobileAllocation','wcdmaPriority'],
+        'TRX':['adminState','channel0Pcm','channel0Type','channel1Type','channel2Type','channel3Type','channel4Type','channel5Type','channel6Type','channel7Type','preferredBcchMark','daPool_ID','initialFrequency','lapdLinkName','lapdLinkNumber','tsc'],
+        'ADCE':['adjCellBsicBcc','adjCellBsicNcc','adjCellLayer','adjacentCellIdCI','adjacentCellIdLac','adjacentCellIdMCC','adjacentCellIdMNC','adjcIndex','bcchFrequency','targetCellDN'],
+        'LNCEL':['cellName','name','administrativeState','angle','eutraCelId','expectedCellSize','ilReacTimerUl','lcrId','p0NomPucch','p0NomPusch','p0NomPuschIAw','pFreqPrio','pMax','phyCellId','tac','rcEnableDl','rcEnableUl'],
+        'WCEL':['name','AdminCellState','angle','CId','FMCLIdentifier','HSDPAenabled','InitialBitRateDL','InitialBitRateUL','LAC','LTECellReselection','PriScrCode','PrxNoise','PtxCellMax','PtxPrimaryCPICH','PtxTarget','QqualMin','QrxlevMin','SectorID','Sintersearch','SintersearchConn','Sintrasearch','Tcell','Treselection','UARFCN'],
+        'LNCEL_FDD':['actMMimo','addNumDrbRadioReasHo','addNumDrbTimeCriticalHo','addNumQci1DrbRadioReasHo','addNumQci1DrbTimeCriticalHo','dlChBw','dlMimoMode','dlRsBoost','earfcnDL','maxNumActDrb','maxNumActUE','maxNumCaConfUe','maxNumUeDl','maxNumUeUl','prachCS','prachConfIndex','rootSeqIndex','ulChBw']
+    }
+
     print("\n# Exporting elements...")
 
     for m,d in results.items():
 
         # Filtra o tipo de Export desejado
         if (fReadType != 'READALL') and (m not in opt_list):
-            str_ignored += '\n    - ' + m.ljust(15) + str(len(d)).rjust(6) + ' elements, ' + str(len(params[m])).rjust(3) + ' params'
+            str_ignored += '\n    - ' + m.ljust(25) + str(len(d)).rjust(6) + ' elements, ' + str(len(params[m])).rjust(3) + ' params'
             continue
 
-        str_added += '\n    - ' + m.ljust(15) + str(len(d)).rjust(6) + ' elements, ' + str(len(params[m])).rjust(3) + ' params'
+        str_added += '\n    - ' + m.ljust(25) + str(len(d)).rjust(6) + ' elements, ' + str(len(params[m])).rjust(3) + ' params'
 
         output_file = output_path + m + '.csv'
         out = open(output_file, 'w')
@@ -230,6 +241,45 @@ def process(xml_files, output_path, fReadType, opt_list):
                 
         out.close()
 
+        ## LISTAR PRINCIPAIS PARAMETROS
+        if m in params_mini.keys():
+
+            output_file_mini = f'{output_path}../{m}.csv'
+            out_mini = open(output_file_mini, 'w')
+            
+            # Encontrar a coluna com o primeiro parâmetro
+            pList_mini = params_mini[m]
+            ibp = pList.index('ID') + 1
+
+            # Classificar os parâmetros em ordem alfabética
+            bp = pList[:ibp]
+            pNames_mini = pList_mini
+            pNames_mini.sort()
+
+            # Restaura lista de colunas completa
+            bp.extend(pNames_mini)
+            mycols_mini = ';'.join(bp)
+
+            # Grava os títulos das colunas
+            out_mini.write(mycols_mini)
+            out_mini.write('\n')
+
+            for id_mini,p_mini in d.items():
+                
+                myvals_mini = ''
+                for pp_mini in bp:
+
+                    try:
+                        myvals_mini += ';' + p_mini.get(pp_mini,'')
+                    except:
+                        myvals_mini += ';'
+
+                myvals_mini = myvals_mini[1:] + '\n'
+                out_mini.write(myvals_mini)
+                    
+            out_mini.close()
+
+
     with open(output_path + "_resultado.txt", 'w') as f:            #, encoding = 'utf-8'
         f.write("Elements exported:\n")
         f.write(str_added)
@@ -237,3 +287,4 @@ def process(xml_files, output_path, fReadType, opt_list):
         f.write(str_ignored)
 
     print("\n  + Exported elements:\n" + str_added)
+
