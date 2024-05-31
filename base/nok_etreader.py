@@ -167,18 +167,18 @@ class NokiaXML(object):
         return self.n
 
 
-def process(xml_files, output_path, fReadType, opt_list):
+def process(xml_files, output_path, fReadType, opt_list, fprint):
 
     str_ignored = ''
     str_added = ''
     
     parser = ET.XMLParser(target = NokiaXML())
 
-    print(f"\n# Reading:" )
+    fprint(f"\n\n# Reading:" )
     for this_xml in xml_files:
         parser.target.xmlFile = this_xml.split("/")[-1][:-4] # Nome do arquivo XML
         n = ET.parse(this_xml, parser)
-        print(f"  + {n} elements found in {this_xml}." )
+        fprint(f"\n  + {n} elements in {this_xml}" )
     
     results = parser.target.all_mo
     params = parser.target.all_p
@@ -194,7 +194,7 @@ def process(xml_files, output_path, fReadType, opt_list):
         'LNCEL_FDD':['actMMimo','addNumDrbRadioReasHo','addNumDrbTimeCriticalHo','addNumQci1DrbRadioReasHo','addNumQci1DrbTimeCriticalHo','dlChBw','dlMimoMode','dlRsBoost','earfcnDL','maxNumActDrb','maxNumActUE','maxNumCaConfUe','maxNumUeDl','maxNumUeUl','prachCS','prachConfIndex','rootSeqIndex','ulChBw']
     }
 
-    print("\n# Exporting elements...")
+    fprint("\n\n# Exporting elements...")
 
     for m,d in results.items():
 
@@ -281,10 +281,10 @@ def process(xml_files, output_path, fReadType, opt_list):
 
 
     with open(output_path + "_resultado.txt", 'w') as f:            #, encoding = 'utf-8'
-        f.write("Elements exported:\n")
+        f.write("Elements exported:")
         f.write(str_added)
         f.write("\n\nElements ignored:\n")
         f.write(str_ignored)
 
-    print("\n  + Exported elements:\n" + str_added)
+    fprint(str_added)
 
