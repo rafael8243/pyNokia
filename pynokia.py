@@ -1,8 +1,10 @@
 from tkinter import (Button, Radiobutton, Frame, Label, StringVar, Tk, filedialog)
 from tkinter.scrolledtext import ScrolledText
+from tkinter import ttk
+
 import pandas as pd
 
-import os
+import os.path
 from threading import Thread
 
 class App(Tk):
@@ -13,6 +15,8 @@ class App(Tk):
 
     def __init__(self):
         Tk.__init__(self)
+        style = ttk.Style(self)
+        style.theme_use('clam')
         #app_view.begin(self)
 
         self.title(App.APP_NAME)
@@ -24,25 +28,25 @@ class App(Tk):
         self.base_path = os.path.expanduser('~/Documents')
 
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
-        
+
         # Frame 1
-        toolbar_box = Frame(self, relief="ridge", bd=0, padx=2)
-        toolbar_box.pack(fill="x", side="top", padx=2, pady=(4,2))
+        toolbar_box = ttk.Frame(self, relief="ridge")
+        toolbar_box.pack(fill="x", side="top", padx=5, pady=5)
 
-        # Frame 2        
-        content_box = Frame(self, relief="ridge", bd=0, bg='lightgrey')
-        content_box.pack(fill="both", side='top', expand=True)
+        # Frame 2
+        content_box = ttk.Frame(self, relief="ridge")
+        content_box.pack(fill="both", side='top', padx=5, pady=(0,5), expand=True)
 
-        btn_open = Button(toolbar_box, text="Open XML", command=self.select_file)
-        btn_open.pack(side="left")
+        btn_open = ttk.Button(toolbar_box, text="Open XML", command=self.select_file)
+        btn_open.pack(side="left", padx=5, pady=5)
 
-        rad_def = Radiobutton(toolbar_box, text="Default" , variable=self.READ_TYPE, value="DEFAULT")
-        rad_all = Radiobutton(toolbar_box, text="Complete", variable=self.READ_TYPE, value="READALL")
-        rad_def.pack(side="right")
+        rad_def = ttk.Radiobutton(toolbar_box, text="Default" , variable=self.READ_TYPE, value="DEFAULT")
+        rad_all = ttk.Radiobutton(toolbar_box, text="Complete", variable=self.READ_TYPE, value="READALL")
+        rad_def.pack(side="right", padx=10)
         rad_all.pack(side="right")
 
-        self.txt_out = ScrolledText(content_box, height=300)
-        self.txt_out.pack(fill="both", padx=4, pady=2)
+        self.txt_out = ScrolledText(content_box, height=300, bg='lightgray')
+        self.txt_out.pack(fill="both", padx=5, pady=5)
         self.print_box('Open XML file to begin.')
 
         self.xml_file_path.get()
@@ -55,20 +59,20 @@ class App(Tk):
 
     def check_file(self) -> bool:
 
-        self.print_box(f'\n\n# Source file(s):')
+        self.print_box(f'\n\n###############################################################\n\n# Source file(s):')
 
         for i in range(len(self.xml_files_path)):
             path_split = os.path.split(self.xml_files_path[i])
 
             if os.path.exists(self.xml_files_path[i]):
                 self.base_path = os.chdir(path_split[0]) # Change base directory to last used
-                xml_size = round(os.stat(self.xml_files_path[i]).st_size / (1024 * 1024),2)
+                xml_size = round(os.path.getsize(self.xml_files_path[i]) / (1024 * 1024),2)
                 self.print_box(f'\n  - {path_split[1]} ({xml_size} MB)')
 
             else:
-                self.print_box(f'\n  - Not found: {self.xml_files_path[i]}!')
+                self.print_box(f'\n  >> FILE NOT FOUND: {self.xml_files_path[i]} <<')
                 return False
-        
+
         return True
 
 
@@ -82,16 +86,13 @@ class App(Tk):
             title='Open XML DUMP',
             initialdir=self.base_path,
             filetypes=filetypes)
-        
+
         if len(self.xml_files_path) == 0:
-            self.print_box('No file selected')
+            self.print_box('  >> NO FILE SELECTED <<')
             return False
 
         if self.check_file():
             self.fread_type = self.READ_TYPE.get()
-            self.print_box(f'\n\n# Processing: {self.fread_type}')
-            #self.lbl_file = Label(self.content_box, text=self.xml_file_path).pack(side="bottom")
-
             self.threading_read()
 
 
@@ -104,7 +105,7 @@ class App(Tk):
 
 
     def threading_read(self):
-        
+
         # Call work function
         t1=Thread(target = self.read_file)
         t1.start()
@@ -112,54 +113,54 @@ class App(Tk):
 
     def read_file(self):
         from base import nok_etreader as nokr
-        from time import perf_counter, localtime, strftime
+        from time import perf_counter
 
-        tm_start = perf_counter()
-        
         default_list = ['LNCEL_FDD', 'LNBTS', 'LNCEL', 'IRFIM', 'SIB', 'LNMME','MOPR',
                         'LNADJW', 'LNADJG', 'LNHOIF', 'CAREL', 'LNBTS_FDD', 'WNCELG', 'WNBTS',
                         'ADJI', 'WBTS', 'ADJS', 'ADJD', 'WCEL', 'FMCS', 'HOPS', 
                         'COCO', 'ADJG', 'ADJL', 'RNC', 'LAPD', 'MAL', 'TRX', 
                         'BCF', 'DAP', 'BTS', 'ADCE', 'ADJW', 'BAL', 'BSC']
 
-        mtime = localtime(os.path.getmtime(self.xml_files_path[0])) #TODO CONTINUAR
-        timestamp = strftime('%Y%m%d', mtime)
-
-        caminho = os.path.dirname(self.xml_files_path[0]) + "/output/"
-        output = os.path.splitext(self.xml_files_path[0])[0] + ".xlsx"
-
-        # Limpa parta temporária de saída
-        old_files = os.listdir(caminho)
-
-        for f in old_files:
-            if f.endswith(".csv"):
-                os.remove(os.path.join(caminho, f))
 
         # Build Output Filename
-        i = 0
-        while os.path.exists(output):
-            i = i + 1
-            output = os.path.splitext(self.xml_files_path[0])[0] + " (" + str(i) + ").xlsx"
+        out_path = os.path.dirname(self.xml_files_path[0]) + "/output/"
+        out_file = os.path.splitext(self.xml_files_path[0])[0] + ".xlsx"
 
-        # Read and export selected elements 
-        nokr.process(self.xml_files_path, caminho, self.fread_type, default_list, self.print_box)
+        for r in (("NOK3", "DUMP"), ("NOK4", "DUMP"), ("NOK5", "DUMP")):
+            out_file = out_file.replace(*r)
+
+        i = 0
+        while os.path.exists(out_file):
+            i +=  1
+            out_file = os.path.splitext(out_file)[0] + " (" + str(i) + ").xlsx"
+
+
+        # Limpa parta temporária de saída
+        old_files = os.listdir(out_path)
+        for f in old_files:
+            if f.endswith(".csv"):
+                os.remove(os.path.join(out_path, f))
+
+        tm_start = perf_counter()
+
+        # Read and export selected elements
+        nokr.process(self.xml_files_path, out_path, self.fread_type, default_list, self.print_box)
 
         tm_parse = perf_counter()
-        self.print_box('\n\n# Merging data...')
+        self.print_box('\n\n  >> MAKE EXCEL EXPORT...')
 
-        MergeCSV(caminho, output, self.print_box)
+        MergeCSV(out_path, out_file, self.print_box)
 
         tm_merge = perf_counter()
         te_parse = round(tm_parse - tm_start , 2)
         te_merge = round(tm_merge - tm_parse , 2)
+        te_all   = round(tm_merge - tm_start , 2)
 
         self.print_box(f'\n  Read : {te_parse:7.2f} s')
         self.print_box(f'\n  Merge: {te_merge:7.2f} s')
-
-        te_all = round(tm_merge - tm_start , 2)
         self.print_box(f'\n         ----------\n  Total: {te_all:7.2f} s')
+        self.print_box(f"\n\n  >> FINISHED\n      - {out_file}\n")
 
-        self.print_box("\n\n# Finished!\n  => " + output + "\n")
 
 if __name__ == '__main__':
 
@@ -174,7 +175,7 @@ if __name__ == '__main__':
 
         for csvfilename in csv_list:
 
-            df = pd.read_csv(csvfilename, engine='python', delimiter=';', encoding='iso-8859-1')     #TODO Guess field type
+            df = pd.read_csv(csvfilename, engine='python', delimiter='|', encoding='iso-8859-1')     #TODO Guess field type
             sname = csvfilename.split('/')[-1].split('.')[0]
             fprint(f'\n    {sname} - OK')
             

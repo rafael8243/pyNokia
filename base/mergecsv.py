@@ -9,7 +9,7 @@ def ext_MergeCSV(origem, destino):
 
     writer = pd.ExcelWriter(destino) # Arbitrary output name
     for csvfilename in csv_list:        
-        df = pd.read_csv(csvfilename, engine='python', delimiter=',') 
+        df = pd.read_csv(csvfilename, engine='python', delimiter=',').sort_values('DN')
         sname = csvfilename.split('\\')[-1].split('.')[0]
         df.to_excel(writer,sheet_name=sname, index = False)
         
