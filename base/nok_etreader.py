@@ -1,5 +1,6 @@
 
 import lxml.etree as ET
+from os import path
 
 class NokiaXML(object):
     def __init__(self):
@@ -167,10 +168,11 @@ class NokiaXML(object):
         return self.n
 
 
-def process(xml_files, output_path, fReadType, opt_list, fprint):
+def process(xml_files, tmp_path, fReadType, opt_list, fprint):
 
     str_ignored = ''
     str_added = ''
+    out_path = path.split(xml_files[0])[0]
 
     parser = ET.XMLParser(target = NokiaXML())
 
@@ -208,7 +210,7 @@ def process(xml_files, output_path, fReadType, opt_list, fprint):
 
         str_added += '\n    - ' + m.ljust(25) + str(len(d)).rjust(6) + ' elements, ' + str(len(params[m])).rjust(3) + ' params'
 
-        output_file = output_path + m + '.csv'
+        output_file = f'{tmp_path}/{m}.csv'
         out = open(output_file, 'w')
 
         ## Organizar em ordem alfabética:
@@ -247,7 +249,7 @@ def process(xml_files, output_path, fReadType, opt_list, fprint):
         ## LISTAR PRINCIPAIS PARAMETROS
         if m in params_mini.keys():
 
-            output_file_mini = f'{output_path}../{m}.csv'
+            output_file_mini = f'{out_path}/{m}.csv'
             out_mini = open(output_file_mini, 'w')
             
             # Encontrar a coluna com o primeiro parâmetro
@@ -283,7 +285,7 @@ def process(xml_files, output_path, fReadType, opt_list, fprint):
             out_mini.close()
 
 
-    with open(output_path + "_resultado.txt", 'w') as f:            #, encoding = 'utf-8'
+    with open(out_path + "/_resultado.txt", 'w') as f:            #, encoding = 'utf-8'
         f.write("Elements exported:")
         f.write(str_added)
         f.write("\n\nElements ignored:\n")

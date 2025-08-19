@@ -3,6 +3,7 @@ from tkinter.scrolledtext import ScrolledText
 from tkinter import ttk
 
 import pandas as pd
+import tempfile
 
 import os.path
 from threading import Thread
@@ -123,7 +124,9 @@ class App(Tk):
 
 
         # Build Output Filename
-        out_path = os.path.dirname(self.xml_files_path[0]) + "/output/"
+        temp_path = tempfile.TemporaryDirectory(prefix='_dn')
+        self.tmp_path = temp_path.name
+
         out_file = os.path.splitext(self.xml_files_path[0])[0] + ".xlsx"
 
         for r in (("NOK3", "DUMP"), ("NOK4", "DUMP"), ("NOK5", "DUMP")):
@@ -132,24 +135,24 @@ class App(Tk):
         i = 0
         while os.path.exists(out_file):
             i +=  1
-            out_file = os.path.splitext(out_file)[0] + " (" + str(i) + ").xlsx"
+            out_file = os.path.split(out_file)[0] + " (" + str(i) + ").xlsx"
 
 
         # Limpa parta temporária de saída
-        old_files = os.listdir(out_path)
+        old_files = os.listdir(self.tmp_path)
         for f in old_files:
             if f.endswith(".csv"):
-                os.remove(os.path.join(out_path, f))
+                os.remove(os.path.join(self.tmp_path, f))
 
         tm_start = perf_counter()
 
         # Read and export selected elements
-        nokr.process(self.xml_files_path, out_path, self.fread_type, default_list, self.print_box)
+        nokr.process(self.xml_files_path, self.tmp_path, self.fread_type, default_list, self.print_box)
 
         tm_parse = perf_counter()
         self.print_box('\n\n  >> MAKE EXCEL EXPORT...')
 
-        MergeCSV(out_path, out_file, self.print_box)
+        MergeCSV(self.tmp_path, out_file, self.print_box)
 
         tm_merge = perf_counter()
         te_parse = round(tm_parse - tm_start , 2)
@@ -167,7 +170,7 @@ if __name__ == '__main__':
     def MergeCSV(origem, destino, fprint):
         
         files = os.listdir(origem)
-        csv_list = [origem + i for i in files if i.endswith('.csv')]
+        csv_list = [f'{origem}/{i}' for i in files if i.endswith('.csv')]
 
         fprint(f"\n\n# Saving output file...")
 
