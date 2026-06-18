@@ -1,6 +1,5 @@
-
 import lxml.etree as ET
-from os import path
+from pathlib import Path
 
 class NokiaXML(object):
     def __init__(self):
@@ -172,32 +171,58 @@ def process(xml_files, tmp_path, fReadType, opt_list, fprint):
 
     str_ignored = ''
     str_added = ''
-    out_path = path.split(xml_files[0])[0]
+    out_path = Path(xml_files[0]).parent
 
     parser = ET.XMLParser(target = NokiaXML())
 
     fprint(f"\n\n  >> READING" )
     for this_xml in xml_files:
-        parser.target.xmlFile = this_xml.split("/")[-1][:-4] # Nome do arquivo XML
+        xml_path = Path(this_xml)
+        parser.target.xmlFile = xml_path.stem  # Nome do arquivo XML sem extensão
         n = ET.parse(this_xml, parser)
         fprint(f"\n     + {n} elements in {this_xml}" )
 
     results = parser.target.all_mo
     params = parser.target.all_p
 
-    params_mini = {
-        'BSC':['name'],
-        'RNC':['name'],
-        'BTS':['nwName','adminState','angle','antennaHopping','bsIdentityCodeBCC','bsIdentityCodeNCC','btsIsHopping','cellBarred','cellId','dedicatedGPRScapacity','defaultGPRScapacity','egprsEnabled','fastReturnToLTE','fddQMin','fddQOffset','gprsEnabled','gsmPriority','hoppingMode','hoppingSequenceNumber1','locationAreaIdLAC','maioOffset','maioStep','msMaxDistInCallSetup','nsei','pcuIdentifier','penaltyTime','psei','qSearchI','qSearchP','rxLevAccessMin','timerPeriodicUpdateMs','usedMobileAllocation','wcdmaPriority'],
-        'TRX':['adminState','channel0Pcm','channel0Type','channel1Type','channel2Type','channel3Type','channel4Type','channel5Type','channel6Type','channel7Type','preferredBcchMark','daPool_ID','initialFrequency','lapdLinkName','lapdLinkNumber','tsc'],
-        'ADCE':['adjCellBsicBcc','adjCellBsicNcc','adjCellLayer','adjacentCellIdCI','adjacentCellIdLac','adjacentCellIdMCC','adjacentCellIdMNC','adjcIndex','bcchFrequency','targetCellDN'],
-        'ADJL':['earfcn','lteAdjCellMcc','lteAdjCellMinBand','lteAdjCellMinRxLevel','lteAdjCellMnc','lteAdjCellPriority','lteAdjCellReselectLowerThr','lteAdjCellReselectUpperThr','lteAdjCellTac','pcid'],
-        'LNCEL':['cellName','name','administrativeState','angle','eutraCelId','expectedCellSize','ilReacTimerUl','lcrId','p0NomPucch','p0NomPusch','p0NomPuschIAw','pFreqPrio','pMax','phyCellId','tac','rcEnableDl','rcEnableUl'],
-        'WCEL':['name','AdminCellState','angle','CId','FMCLIdentifier','HSDPAenabled','InitialBitRateDL','InitialBitRateUL','LAC','LTECellReselection','PriScrCode','PrxNoise','PtxCellMax','PtxPrimaryCPICH','PtxTarget','QqualMin','QrxlevMin','SectorID','Sintersearch','SintersearchConn','Sintrasearch','Tcell','Treselection','UARFCN'],
-        'LNCEL_FDD':['actMMimo','addNumDrbRadioReasHo','addNumDrbTimeCriticalHo','addNumQci1DrbRadioReasHo','addNumQci1DrbTimeCriticalHo','dlChBw','dlMimoMode','dlRsBoost','earfcnDL','maxNumActDrb','maxNumActUE','maxNumCaConfUe','maxNumUeDl','maxNumUeUl','prachCS','prachConfIndex','rootSeqIndex','ulChBw'],
-        'NRCELL':['name','administrativeState','chBw','configuredEpsTac','freqBandIndicatorNR','lcrId','nrCellIdentity','nrarfcn','physCellId','prachRootSequenceIndex'],
-        'TRACKINGAREA':['TRACKINGAREA','fiveGsTac']
-    }
+    # Determine technology based on key MOs:
+    tech_set = set()
+    if any(item in ['BSC','BCF','TRX','ADCE'] for item in results.keys()):
+        tech_set.add('2G')
+    if any(item in ['RNC','WBTS','ADJI'] for item in results.keys()):
+        tech_set.add('3G')
+    if any(item in ['LNCEL_FDD','IRFIM','LNBTS'] for item in results.keys()):
+        tech_set.add('4G')
+    if any(item in ['NRBTS','NRCELL'] for item in results.keys()):
+        tech_set.add('5G')
+    
+    params_mini = {}
+
+    if len(tech_set) == 0:
+        fprint("\n     Found no suitable element to determine tecnology.")
+        tech_str = ''
+    else:
+        fprint("\n     Tecnology found in files: " + ','.join(list(tech_set)))
+        tech_str = ','.join(list(tech_set))
+
+        if len(tech_set) > 1:
+            fprint("\n     The selection has multiple tecnologies.\nNo miniexport will be done.")
+
+        else:
+            params_mini = {
+                'BSC2G':['name'],
+                'RNC3G':['name'],
+                'BTS2G':['nwName','adminState','angle','antennaHopping','bsIdentityCodeBCC','bsIdentityCodeNCC','btsIsHopping','cellBarred','cellId','dedicatedGPRScapacity','defaultGPRScapacity','egprsEnabled','fastReturnToLTE','fddQMin','fddQOffset','gprsEnabled','gsmPriority','hoppingMode','hoppingSequenceNumber1','locationAreaIdLAC','maioOffset','maioStep','msMaxDistInCallSetup','nsei','pcuIdentifier','penaltyTime','psei','qSearchI','qSearchP','rxLevAccessMin','timerPeriodicUpdateMs','usedMobileAllocation','wcdmaPriority'],
+                'TRX2G':['adminState','channel0Pcm','channel0Type','channel1Type','channel2Type','channel3Type','channel4Type','channel5Type','channel6Type','channel7Type','preferredBcchMark','gprsEnabledTrx','daPool_ID','initialFrequency','lapdLinkName','lapdLinkNumber','tsc'],
+                'ADCE2G':['adjCellBsicBcc','adjCellBsicNcc','adjacentCellIdCI','adjacentCellIdLac','adjacentCellIdMCC','adjacentCellIdMNC','adjcIndex','bcchFrequency','targetCellDN'],
+                'ADJL2G':['earfcn','lteAdjCellMcc','lteAdjCellMinBand','lteAdjCellMnc','lteAdjCellPriority','lteAdjCellTac'],
+                'ADJW2G':['AdjwCId','lac','mcc','mnc','rncId','scramblingCode','uarfcn','targetCellDN'],
+                'LNCEL4G':['cellName','name','administrativeState','angle','eutraCelId','expectedCellSize','ilReacTimerUl','lcrId','p0NomPucch','p0NomPusch','p0NomPuschIAw','pFreqPrio','pMax','phyCellId','tac','rcEnableDl','rcEnableUl'],
+                'WCEL3G':['name','AdminCellState','angle','CId','FMCLIdentifier','HSDPAenabled','InitialBitRateDL','InitialBitRateUL','LAC','LTECellReselection','PriScrCode','PrxNoise','PtxCellMax','PtxPrimaryCPICH','PtxTarget','QqualMin','QrxlevMin','SectorID','Sintersearch','SintersearchConn','Sintrasearch','Tcell','Treselection','UARFCN'],
+                'LNCEL_FDD4G':['actMMimo','addNumDrbRadioReasHo','addNumDrbTimeCriticalHo','addNumQci1DrbRadioReasHo','addNumQci1DrbTimeCriticalHo','dlChBw','dlMimoMode','dlRsBoost','earfcnDL','maxNumActDrb','maxNumActUE','maxNumCaConfUe','maxNumUeDl','maxNumUeUl','prachCS','prachConfIndex','rootSeqIndex','ulChBw'],
+                'NRCELL5G':['name','administrativeState','chBw','configuredEpsTac','freqBandIndicatorNR','lcrId','nrCellIdentity','nrarfcn','physCellId','prachRootSequenceIndex'],
+                'TRACKINGAREA5G':['TRACKINGAREA','fiveGsTac']
+            }
 
     fprint("\n\n# Exporting elements...")
 
@@ -210,7 +235,7 @@ def process(xml_files, tmp_path, fReadType, opt_list, fprint):
 
         str_added += '\n    - ' + m.ljust(25) + str(len(d)).rjust(6) + ' elements, ' + str(len(params[m])).rjust(3) + ' params'
 
-        output_file = f'{tmp_path}/{m}.csv'
+        output_file = Path(tmp_path) / f'{m}.csv'
         out = open(output_file, 'w')
 
         ## Organizar em ordem alfabética:
@@ -231,29 +256,22 @@ def process(xml_files, tmp_path, fReadType, opt_list, fprint):
         out.write(mycols)
         out.write('\n')
 
-        for id,p in d.items():
-
-            myvals = ''
-            for pp in bp:
-
-                try:
-                    myvals += '|' + p.get(pp,'')
-                except:
-                    myvals += '|'
-
-            myvals = myvals[1:] + '\n'
-            out.write(myvals)
+        lines = []
+        for id, p in d.items():
+            line = '|'.join(p.get(pp, '') for pp in bp)
+            lines.append(line)
+        out.write('\n'.join(lines))  # Batch write
 
         out.close()
 
         ## LISTAR PRINCIPAIS PARAMETROS
-        if m in params_mini.keys():
+        if f'{m + tech_str}' in params_mini.keys():
 
-            output_file_mini = f'{out_path}/{m}.csv'
+            output_file_mini = out_path / f'{m + tech_str}.csv'
             out_mini = open(output_file_mini, 'w')
             
             # Encontrar a coluna com o primeiro parâmetro
-            pList_mini = params_mini[m]
+            pList_mini = params_mini[m + tech_str]
             ibp = pList.index('ID') + 1
 
             # Classificar os parâmetros em ordem alfabética
@@ -285,7 +303,8 @@ def process(xml_files, tmp_path, fReadType, opt_list, fprint):
             out_mini.close()
 
 
-    with open(out_path + "/_resultado.txt", 'w') as f:            #, encoding = 'utf-8'
+    resultado_file = out_path / "_resultado.txt"
+    with open(resultado_file, 'w') as f:
         f.write("Elements exported:")
         f.write(str_added)
         f.write("\n\nElements ignored:\n")
