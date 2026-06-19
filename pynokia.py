@@ -3,7 +3,9 @@ from tkinter.scrolledtext import ScrolledText
 from tkinter import ttk
 
 import pandas as pd
+import re
 import tempfile
+import queue
 from pathlib import Path
 from threading import Thread
 from queue import Queue
@@ -79,7 +81,7 @@ class App(Tk):
             while True:
                 msg = self.message_queue.get_nowait()
                 self.print_box(msg)
-        except:
+        except queue.Empty:
             # Queue is empty, which is normal - this is not an error
             pass
         
@@ -119,7 +121,7 @@ class App(Tk):
             initialdir=self.base_path,
             filetypes=filetypes)
 
-        if len(self.xml_files_path) == 0:
+        if not self.xml_files_path:
             self.print_box('  >> NO FILE SELECTED <<')
             return False
 
@@ -160,24 +162,9 @@ class App(Tk):
                             'COCO', 'ADJG', 'ADJL', 'RNC', 'LAPD', 'MAL', 'TRX', 
                             'BCF', 'DAP', 'BTS', 'ADCE', 'ADJW', 'BAL', 'BSC']
 
-            # Build Output Filename
+            # Build temporary directory for CSV files
             temp_path = tempfile.TemporaryDirectory(prefix='_dn')
             self.tmp_path = temp_path.name
-
-            source_file = Path(self.xml_files_path[0])
-            out_file = source_file.with_suffix('.xlsx')
-
-            # Remove Nokia dump identifiers from filename
-            filename = out_file.stem
-            for old, new in (("NOK3", "DUMP"), ("NOK4", "DUMP"), ("NOK5", "DUMP")):
-                filename = filename.replace(old, new)
-            out_file = out_file.parent / f"{filename}.xlsx"
-
-            # Auto-increment filename if it already exists
-            i = 0
-            while out_file.exists():
-                i += 1
-                out_file = out_file.parent / f"{filename} ({i}).xlsx"
 
             # Clean temporary output directory
             tmp_path = Path(self.tmp_path)
@@ -191,14 +178,54 @@ class App(Tk):
                 """Callback for background threads to queue messages safely."""
                 self.queue_message(msg)
 
-            # Read and export selected elements
-            nokr.process(self.xml_files_path, self.tmp_path, self.fread_type, 
-                        default_list, thread_safe_print)
+            # Read and export selected elements - returns CSV files grouped by technology
+            # and original file grouping
+            csv_by_tech, valid_techs_files = nokr.process(
+                self.xml_files_path, self.tmp_path, 
+                self.fread_type, default_list, thread_safe_print
+                )
 
             tm_parse = perf_counter()
+            
+            # Handle case where no valid files were processed
+            if not csv_by_tech:
+                self.queue_message('\n\n  >> NO EXCEL FILES GENERATED (no valid files)\n')
+                return
+            
             self.queue_message('\n\n  >> MAKE EXCEL EXPORT...')
-
-            MergeCSV(self.tmp_path, str(out_file), thread_safe_print)
+            
+            # Generate separate Excel file for each technology group
+            output_files = []
+            out_path = Path(self.xml_files_path[0]).parent
+            
+            for tech in sorted(csv_by_tech.keys()):
+                csv_files = csv_by_tech[tech]
+                tech_xml_files = valid_techs_files.get(tech, [])
+                
+                # Use the first XML file from this tech group to generate output name
+                if tech_xml_files:
+                    source_file = Path(tech_xml_files[0])
+                    # Extract the original filename pattern and replace NOK[345] with DUMP
+                    output_name = re.sub(r"NOK[345]", "DUMP", source_file.stem) + ".xlsx"
+                else:
+                    # Fallback if no source files available
+                    output_name = f"DUMP_{tech}.xlsx"
+                
+                excel_file = out_path / output_name
+                
+                # Handle duplicate filenames
+                if excel_file.exists():
+                    base_name = excel_file.stem
+                    i = 1
+                    candidate = out_path / f"{base_name} ({i}){excel_file.suffix}"
+                    while candidate.exists():
+                        i += 1
+                        candidate = out_path / f"{base_name} ({i}){excel_file.suffix}"
+                    excel_file = candidate
+                
+                # Merge CSVs for this technology into Excel
+                MergeCSV(self.tmp_path, str(excel_file), thread_safe_print, csv_files)
+                output_files.append(excel_file)
 
             tm_merge = perf_counter()
             te_parse = round(tm_parse - tm_start , 2)
@@ -208,7 +235,9 @@ class App(Tk):
             self.queue_message(f'\n  Read : {te_parse:7.2f} s')
             self.queue_message(f'\n  Merge: {te_merge:7.2f} s')
             self.queue_message(f'\n         ----------\n  Total: {te_all:7.2f} s')
-            self.queue_message(f"\n\n  >> FINISHED\n      - {out_file}\n")
+            self.queue_message(f"\n\n  >> FINISHED\n")
+            for out_file in output_files:
+                self.queue_message(f"      - {out_file}\n")
             
         except Exception as e:
             # Catch any errors and display them safely to user
@@ -225,13 +254,15 @@ class App(Tk):
 
 if __name__ == '__main__':
 
-    def MergeCSV(origem, destino, fprint):
-        """Merge multiple CSV files into a single Excel workbook.
+    def MergeCSV(origem, destino, fprint, csv_files=None):
+        """Merge specific CSV files into a single Excel workbook.
         
         Args:
             origem (str): Source directory containing CSV files
             destino (str): Output Excel file path
             fprint (callable): Thread-safe callback for logging messages
+            csv_files (list): Optional list of Path objects to specific CSV files to merge.
+                            If None, merges all CSV files in origem directory.
         
         Raises:
             FileNotFoundError: If origin directory doesn't exist
@@ -242,27 +273,45 @@ if __name__ == '__main__':
         if not origem_path.exists():
             raise FileNotFoundError(f"Source directory not found: {origem}")
         
-        csv_list = list(origem_path.glob('*.csv'))
+        # Use provided CSV files or discover all in directory
+        if csv_files is None:
+            csv_list = list(origem_path.glob('*.csv'))
+        else:
+            csv_list = [Path(f) for f in csv_files]
+        
+        if not csv_list:
+            fprint(f"\n  ⚠ No CSV files found for {destino}")
+            return
 
         fprint(f"\n\n# Saving output file...")
 
         # Use context manager to ensure ExcelWriter is properly closed
         # even if an exception occurs during processing
-
-        with pd.ExcelWriter(destino) as writer:
-            for csv_file in csv_list:
-                try:
-                    df = pd.read_csv(str(csv_file), delimiter='|', encoding='iso-8859-1')
-                    sname = csv_file.stem
-                    fprint(f'\n    {sname} - OK')
-                    
-                    df.to_excel(writer, sheet_name=sname, index=False)
-                except Exception as e:
-                    fprint(f'\n    ERROR reading {csv_file.name}: {str(e)}')
-                    # Continue processing other files
-                    continue
-        
-        fprint("\n\n# Done!\n")
+        try:
+            with pd.ExcelWriter(destino) as writer:
+                for csv_file in csv_list:
+                    try:
+                        df = pd.read_csv(str(csv_file), delimiter='|', encoding='iso-8859-1')
+                        sname = csv_file.stem
+                        # Remove technology suffix from sheet name if present
+                        if '_' in sname:
+                            parts = sname.rsplit('_', 1)
+                            if parts[1] in ['2G', '3G', '4G', '5G']:
+                                sname = parts[0]
+                        fprint(f'\n    {sname} - OK')
+                        
+                        df.to_excel(writer, sheet_name=sname, index=False)
+                    except FileNotFoundError:
+                        fprint(f'\n    WARNING: CSV file not found - {csv_file.name}')
+                        continue
+                    except Exception as e:
+                        fprint(f'\n    ERROR reading {csv_file.name}: {str(e)}')
+                        # Continue processing other files
+                        continue
+            
+            fprint("\n\n# Done!\n")
+        except (IOError, OSError) as e:
+            fprint(f'\n    ERROR writing Excel file: {str(e)}')
 
     app = App()
     app.start()
