@@ -9,6 +9,7 @@ import queue
 from pathlib import Path
 from threading import Thread
 from queue import Queue
+from base.config import DEFAULT_ELEMENT_LIST, TEMP_DIR_PREFIX
 
 class App(Tk):
 
@@ -156,14 +157,8 @@ class App(Tk):
         from time import perf_counter
 
         try:
-            default_list = ['LNCEL_FDD', 'LNBTS', 'LNCEL', 'IRFIM', 'SIB', 'LNMME','MOPR',
-                            'LNADJW', 'LNADJG', 'LNHOIF', 'CAREL', 'LNBTS_FDD', 'WNCELG', 'WNBTS',
-                            'ADJI', 'WBTS', 'ADJS', 'ADJD', 'WCEL', 'FMCS', 'HOPS', 
-                            'COCO', 'ADJG', 'ADJL', 'RNC', 'LAPD', 'MAL', 'TRX', 
-                            'BCF', 'DAP', 'BTS', 'ADCE', 'ADJW', 'BAL', 'BSC']
-
             # Build temporary directory for CSV files
-            temp_path = tempfile.TemporaryDirectory(prefix='_dn')
+            temp_path = tempfile.TemporaryDirectory(prefix=TEMP_DIR_PREFIX)
             self.tmp_path = temp_path.name
 
             # Clean temporary output directory
@@ -182,7 +177,7 @@ class App(Tk):
             # and original file grouping
             csv_by_tech, valid_techs_files = nokr.process(
                 self.xml_files_path, self.tmp_path, 
-                self.fread_type, default_list, thread_safe_print
+                self.fread_type, DEFAULT_ELEMENT_LIST, thread_safe_print
                 )
 
             tm_parse = perf_counter()
@@ -283,7 +278,7 @@ if __name__ == '__main__':
             fprint(f"\n  ⚠ No CSV files found for {destino}")
             return
 
-        fprint(f"\n\n# Saving output file...")
+        fprint(f"\n\n# Saving output file {Path(destino).stem}...")
 
         # Use context manager to ensure ExcelWriter is properly closed
         # even if an exception occurs during processing

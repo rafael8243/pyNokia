@@ -1,5 +1,9 @@
 import lxml.etree as ET
 from pathlib import Path
+from .config import (
+    TECH_2G_MOS, TECH_3G_MOS, TECH_4G_MOS, TECH_5G_MOS,
+    PARAMS_MINI_TEMPLATE, CSV_DELIMITER, CSV_ENCODING
+)
 
 class NokiaXML(object):
     def __init__(self):
@@ -187,13 +191,13 @@ def detect_file_technology(xml_file_path: str) -> set:
                 mo_class = elem.get('class', '')
                 
                 # Detect technology based on MO class
-                if mo_class in ['BSC', 'BCF', 'TRX', 'ADCE', 'BTS']:
+                if mo_class in TECH_2G_MOS:
                     tech_set.add('2G')
-                if mo_class in ['RNC', 'WBTS', 'ADJI', 'WCEL', 'ADJS']:
+                if mo_class in TECH_3G_MOS:
                     tech_set.add('3G')
-                if mo_class in ['LNCEL_FDD', 'IRFIM', 'LNBTS', 'LNCEL', 'LNMME', 'LNBTS_FDD', 'LNADJW', 'LNADJG', 'LNHOIF', 'CAREL', 'SIB']:
+                if mo_class in TECH_4G_MOS:
                     tech_set.add('4G')
-                if mo_class in ['NRBTS', 'NRCELL']:
+                if mo_class in TECH_5G_MOS:
                     tech_set.add('5G')
     
     except ET.ParseError as e:
@@ -283,20 +287,6 @@ def process(xml_files, tmp_path, fReadType, opt_list, fprint):
     fprint(f"\n\n  >> PROCESSING {len(valid_techs)} TECHNOLOGY GROUP(S)")
     
     out_path = Path(xml_files[0]).parent
-    params_mini_template = {
-        'BSC2G':['name'],
-        'RNC3G':['name'],
-        'BTS2G':['nwName','adminState','angle','antennaHopping','bsIdentityCodeBCC','bsIdentityCodeNCC','btsIsHopping','cellBarred','cellId','dedicatedGPRScapacity','defaultGPRScapacity','egprsEnabled','fastReturnToLTE','fddQMin','fddQOffset','gprsEnabled','gsmPriority','hoppingMode','hoppingSequenceNumber1','locationAreaIdLAC','maioOffset','maioStep','msMaxDistInCallSetup','nsei','pcuIdentifier','penaltyTime','psei','qSearchI','qSearchP','rxLevAccessMin','timerPeriodicUpdateMs','usedMobileAllocation','wcdmaPriority'],
-        'TRX2G':['adminState','channel0Pcm','channel0Type','channel1Type','channel2Type','channel3Type','channel4Type','channel5Type','channel6Type','channel7Type','preferredBcchMark','gprsEnabledTrx','daPool_ID','initialFrequency','lapdLinkName','lapdLinkNumber','tsc'],
-        'ADCE2G':['adjCellBsicBcc','adjCellBsicNcc','adjacentCellIdCI','adjacentCellIdLac','adjacentCellIdMCC','adjacentCellIdMNC','adjcIndex','bcchFrequency','targetCellDN'],
-        'ADJL2G':['earfcn','lteAdjCellMcc','lteAdjCellMinBand','lteAdjCellMnc','lteAdjCellPriority','lteAdjCellTac'],
-        'ADJW2G':['AdjwCId','lac','mcc','mnc','rncId','scramblingCode','uarfcn','targetCellDN'],
-        'LNCEL4G':['cellName','name','administrativeState','angle','eutraCelId','expectedCellSize','ilReacTimerUl','lcrId','p0NomPucch','p0NomPusch','p0NomPuschIAw','pFreqPrio','pMax','phyCellId','tac','rcEnableDl','rcEnableUl'],
-        'WCEL3G':['name','AdminCellState','angle','CId','FMCLIdentifier','HSDPAenabled','InitialBitRateDL','InitialBitRateUL','LAC','LTECellReselection','PriScrCode','PrxNoise','PtxCellMax','PtxPrimaryCPICH','PtxTarget','QqualMin','QrxlevMin','SectorID','Sintersearch','SintersearchConn','Sintrasearch','Tcell','Treselection','UARFCN'],
-        'LNCEL_FDD4G':['actMMimo','addNumDrbRadioReasHo','addNumDrbTimeCriticalHo','addNumQci1DrbRadioReasHo','addNumQci1DrbTimeCriticalHo','dlChBw','dlMimoMode','dlRsBoost','earfcnDL','maxNumActDrb','maxNumActUE','maxNumCaConfUe','maxNumUeDl','maxNumUeUl','prachCS','prachConfIndex','rootSeqIndex','ulChBw'],
-        'NRCELL5G':['name','administrativeState','chBw','configuredEpsTac','freqBandIndicatorNR','lcrId','nrCellIdentity','nrarfcn','physCellId','prachRootSequenceIndex'],
-        'TRACKINGAREA5G':['TRACKINGAREA','fiveGsTac']
-    }
     
     # Process each technology group separately
     for tech in sorted(valid_techs.keys()):
@@ -329,7 +319,7 @@ def process(xml_files, tmp_path, fReadType, opt_list, fprint):
             continue
         
         # Prepare mini export for this technology
-        params_mini = {k: v for k, v in params_mini_template.items() if tech in k}
+        params_mini = {k: v for k, v in PARAMS_MINI_TEMPLATE.items() if tech in k}
         
         fprint(f"\n     Exporting {len(results)} element types...")
         
@@ -355,14 +345,14 @@ def process(xml_files, tmp_path, fReadType, opt_list, fprint):
                     pNames.sort()
                     
                     bp.extend(pNames)
-                    mycols = '|'.join(bp)
+                    mycols = CSV_DELIMITER.join(bp)
                     
                     out.write(mycols)
                     out.write('\n')
                     
                     lines = []
                     for id_val, p in d.items():
-                        line = '|'.join(p.get(pp, '') for pp in bp)
+                        line = CSV_DELIMITER.join(p.get(pp, '') for pp in bp)
                         lines.append(line)
                     out.write('\n'.join(lines))
             
@@ -384,7 +374,7 @@ def process(xml_files, tmp_path, fReadType, opt_list, fprint):
                         pNames_mini.sort()
                         
                         bp.extend(pNames_mini)
-                        mycols_mini = '|'.join(bp)
+                        mycols_mini = CSV_DELIMITER.join(bp)
                         
                         out_mini.write(mycols_mini)
                         out_mini.write('\n')
@@ -393,9 +383,9 @@ def process(xml_files, tmp_path, fReadType, opt_list, fprint):
                             myvals_mini = ''
                             for pp_mini in bp:
                                 try:
-                                    myvals_mini += '|' + p_mini.get(pp_mini, '')
+                                    myvals_mini += CSV_DELIMITER + p_mini.get(pp_mini, '')
                                 except (KeyError, TypeError, AttributeError):
-                                    myvals_mini += '|'
+                                    myvals_mini += CSV_DELIMITER
                             
                             myvals_mini = myvals_mini[1:] + '\n'
                             out_mini.write(myvals_mini)
